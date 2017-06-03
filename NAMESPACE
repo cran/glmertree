@@ -1,0 +1,34 @@
+import("lme4")
+import("partykit")
+import("Formula")
+
+importFrom("utils", "globalVariables", "installed.packages")
+importFrom("graphics", "plot")
+importFrom("stats", "coef", "logLik", "model.frame", "predict", "terms", "update", "residuals")
+importFrom("grDevices", "devAskNewPage")
+
+export(
+  "lmertree",
+  "glmertree"
+)
+
+S3method("print", "lmertree")
+S3method("print", "glmertree")
+S3method("plot", "lmertree")
+S3method("plot", "glmertree")
+S3method("coef", "lmertree")
+S3method("coef", "glmertree")
+S3method("ranef", "lmertree")
+S3method("ranef", "glmertree")
+S3method("logLik", "lmertree")
+S3method("logLik", "glmertree")
+S3method("model.frame", "lmertree")
+S3method("model.frame", "glmertree")
+S3method("predict", "lmertree")
+S3method("predict", "glmertree")
+S3method("residuals", "lmertree")
+S3method("residuals", "glmertree")
+S3method("terms", "lmertree")
+S3method("terms", "glmertree")
+S3method("as.party", "lmertree")
+S3method("as.party", "glmertree")

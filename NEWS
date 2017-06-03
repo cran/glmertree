@@ -1,0 +1,14 @@
+Changes in Version 0.1-1
+
+  o First CRAN release of the "glmertree" package for fitting generalized linear
+    mixed-effects model trees in R. For an introduction to the underlying methods see
+   
+    Fokkema, Smits, Zeileis, Hothorn, Kelderman (2015). Detecting
+    Treatment-Subgroup Interactions in Clustered Data with Generalized
+    Linear Mixed-Effects Model Trees. Working Paper 2015-10. Working Papers
+    in Economics and Statistics, Research Platform Empirical and Experimental
+    Economics, Universitaet Innsbruck.
+    URL http://EconPapers.RePEc.org/RePEc:inn:wpaper:2015-10
+
+    The package is under development on R-Forge at
+    https://R-Forge.R-project.org/projects/partykit/

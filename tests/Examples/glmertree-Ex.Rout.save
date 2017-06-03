@@ -1,0 +1,236 @@
+
+R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "glmertree"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> library('glmertree')
+Loading required package: lme4
+Loading required package: Matrix
+Loading required package: partykit
+Loading required package: grid
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("DepressionDemo")
+> ### * DepressionDemo
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: DepressionDemo
+> ### Title: Artificial depression treatment dataset
+> ### Aliases: DepressionDemo
+> ### Keywords: datasets
+> 
+> ### ** Examples
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("glmertree")
+> ### * glmertree
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: glmertree
+> ### Title: (Generalized) Linear Mixed Model Trees
+> ### Aliases: lmertree glmertree print.lmertree plot.lmertree coef.lmertree
+> ###   ranef.lmertree logLik.lmertree model.frame.lmertree predict.lmertree
+> ###   terms.lmertree as.party.lmertree residuals.lmertree resid.lmertree
+> ###   print.glmertree plot.glmertree coef.glmertree ranef.glmertree
+> ###   logLik.glmertree model.frame.glmertree predict.glmertree
+> ###   terms.glmertree as.party.glmertree residuals.glmertree
+> ###   resid.glmertree
+> ### Keywords: tree
+> 
+> ### ** Examples
+> 
+> ## artificial example data
+> data("DepressionDemo", package = "glmertree")
+> 
+> ## fit normal linear regression LMM tree for continuous outcome
+> lt <- lmertree(depression ~ treatment | cluster | age + anxiety + duration,
++   data = DepressionDemo)
+> print(lt)
+Linear mixed model tree
+
+Model formula:
+depression ~ treatment | age + anxiety + duration
+
+Fitted party:
+[1] root
+|   [2] duration <= 8
+|   |   [3] anxiety <= 10: n = 53
+|   |                (Intercept) treatmentTreatment 2 
+|   |                   7.458519             4.183184 
+|   |   [4] anxiety > 10: n = 54
+|   |                (Intercept) treatmentTreatment 2 
+|   |                   8.612009             0.513343 
+|   [5] duration > 8: n = 43
+|                (Intercept) treatmentTreatment 2 
+|                  11.098602            -4.584979 
+
+Number of inner nodes:    2
+Number of terminal nodes: 3
+Number of parameters per node: 2
+Objective function (residual sum of squares): 520.2838
+
+Random effects:
+$cluster
+   (Intercept)
+1  -0.30964409
+2  -0.34154568
+3  -0.06755141
+4  -0.57675658
+5  -0.15247281
+6  -0.08761704
+7   0.12905520
+8   0.22500905
+9   0.26125689
+10  0.92026648
+
+> plot(lt, which = "all") # default behavior, which may also be "tree" or "ranef" 
+$cluster
+
+> coef(lt)
+  (Intercept) treatmentTreatment 2
+3    7.458519             4.183184
+4    8.612009             0.513343
+5   11.098602            -4.584979
+> ranef(lt)
+$cluster
+   (Intercept)
+1  -0.30964409
+2  -0.34154568
+3  -0.06755141
+4  -0.57675658
+5  -0.15247281
+6  -0.08761704
+7   0.12905520
+8   0.22500905
+9   0.26125689
+10  0.92026648
+
+> predict(lt, type = "response") # default behavior, type may also be "node" 
+        1         2         3         4         5         6         7         8 
+10.777968 11.554672  7.158595  9.045117 11.280677  8.816418 11.883480  8.771122 
+        9        10        11        12        13        14        15        16 
+ 6.199180  6.923384 11.469750 10.999995  9.337677  9.045117 10.777968  6.388253 
+       17        18        19        20        21        22        23        24 
+11.348869  9.511675  7.158595  6.199180 10.032935  6.473175  6.453109 12.542489 
+       25        26        27        28        29        30        31        32 
+ 8.803024 11.045466 11.312579 11.045466  7.412523  8.523857 11.534606  9.025051 
+       33        34        35        36        37        38        39        40 
+ 8.771122 11.534606 11.216667  7.725149  6.388253  6.923384  8.720464 11.348869 
+       41        42        43        44        45        46        47        48 
+ 9.511675  7.761397  7.347667  7.412523  7.629195  8.523857  8.281765  8.720464 
+       49        50        51        52        53        54        55        56 
+ 7.158595  6.388253  7.725149  8.816418 11.534606  8.249863 11.883480 12.007879 
+       57        58        59        60        61        62        63        64 
+ 8.852666  8.803024 12.542489  6.923384  6.669781  8.816418 10.510855 10.999995 
+       65        66        67        68        69        70        71        72 
+ 9.337677 10.510855  9.373925 10.032935 11.751278  8.720464 11.312579 10.032935 
+       73        74        75        76        77        78        79        80 
+ 6.199180 12.007879  8.852666 12.007879 10.935139 11.751278  6.923384  7.347667 
+       81        82        83        84        85        86        87        88 
+ 8.014652  6.801983  8.523857  6.231082  8.523857 11.216667  9.025051 12.542489 
+       89        90        91        92        93        94        95        96 
+ 6.231082  7.725149  8.438936  6.801983  6.923384  6.473175  9.511675  8.281765 
+       97        98        99       100       101       102       103       104 
+ 8.535912  7.725149 10.777968 11.469750 10.032935  7.347667  8.523857  8.960195 
+      105       106       107       108       109       110       111       112 
+ 7.629195  9.337677  6.669781 11.534606  8.249863  8.281765 11.280677 11.312621 
+      113       114       115       116       117       118       119       120 
+ 7.190496  6.231082 11.554672  8.503792  9.045117  9.373925 11.751278  6.923384 
+      121       122       123       124       125       126       127       128 
+ 6.801983 10.999995  7.432589  7.629195  7.761397  5.963969 11.020061  7.761397 
+      129       130       131       132       133       134       135       136 
+11.312621 11.751278  8.960195  9.025051 12.542489  6.669781  8.960195 11.312579 
+      137       138       139       140       141       142       143       144 
+ 8.771122  6.765735  9.025051  8.014652 11.348869  8.438936  8.420407  8.523857 
+      145       146       147       148       149       150 
+11.280677  8.249863 11.312621 10.935139 11.312621  8.535912 
+> residuals(lt)
+          1           2           3           4           5           6 
+ 2.22203205  2.44532838 -0.15859453  0.95488324 -1.28067735  1.18358211 
+          7           8           9          10          11          12 
+-1.88347991 -1.77112249  0.80081973  4.07661637  1.53024979  3.00000500 
+         13          14          15          16          17          18 
+ 0.66232279 -1.04511676  0.22203205 -0.38825313 -0.34886893  0.48832468 
+         19          20          21          22          23          24 
+-2.15859453  2.80081973  0.96706536 -1.47317454  1.54689109  3.45751050 
+         25          26          27          28          29          30 
+-0.80302408  1.95453356 -1.31257893  2.95453356 -0.41252317  3.47614256 
+         31          32          33          34          35          36 
+-3.53460599 -0.02505113 -0.77112249 -0.53460599 -1.21666724 -2.72514925 
+         37          38          39          40          41          42 
+ 1.61174687 -1.92338363  3.27953596 -2.34886893 -0.51167532  0.23860291 
+         43          44          45          46          47          48 
+ 0.65233261 -1.41252317 -0.62919540  2.47614256 -2.28176475 -1.72046404 
+         49          50          51          52          53          54 
+ 0.84140547 -0.38825313  2.27485075  1.18358211  0.46539401 -2.24986317 
+         55          56          57          58          59          60 
+-0.88347991 -1.00787852  0.14733427 -1.80302408 -0.54248950 -1.92338363 
+         61          62          63          64          65          66 
+-0.66978114  1.18358211 -0.51085546  2.00000500 -2.33767721 -4.51085546 
+         67          68          69          70          71          72 
+ 0.62607495  0.96706536 -0.75127822  1.27953596 -2.31257893 -1.03293464 
+         73          74          75          76          77          78 
+-3.19918027  1.99212148  4.14733427  1.99212148  0.06486077 -0.75127822 
+         79          80          81          82          83          84 
+-2.92338363  1.65233261  0.98534773 -0.80198283 -2.52385744 -0.23108185 
+         85          86          87          88          89          90 
+-1.52385744 -0.21666724 -2.02505113  2.45751050  0.76891815  1.27485075 
+         91          92          93          94          95          96 
+-4.43893603 -0.80198283 -0.92338363 -2.47317454  2.48832468 -2.28176475 
+         97          98          99         100         101         102 
+ 1.46408841  1.27485075  1.22203205 -1.46975021  0.96706536 -0.34766739 
+        103         104         105         106         107         108 
+-1.52385744 -1.96019535  3.37080460 -1.33767721 -3.66978114  0.46539401 
+        109         110         111         112         113         114 
+ 1.75013683 -2.28176475 -3.28067735 -0.31262109  1.80950388  1.76891815 
+        115         116         117         118         119         120 
+-1.55467162 -1.50379181  0.95488324  0.62607495  1.24872178 -0.92338363 
+        121         122         123         124         125         126 
+ 2.19801717 -0.99999500 -1.43258880  0.37080460  1.23860291 -2.96396937 
+        127         128         129         130         131         132 
+ 0.97993937  0.23860291 -2.31262109  0.24872178 -0.96019535  1.97494887 
+        133         134         135         136         137         138 
+-0.54248950  1.33021886  1.03980465  1.68742107  3.22887751  4.23426501 
+        139         140         141         142         143         144 
+-0.02505113 -3.01465227  0.65113107  0.56106397 -1.42040668  1.47614256 
+        145         146         147         148         149         150 
+ 1.71932265 -0.24986317 -0.31262109  1.06486077 -1.31262109  1.46408841 
+> 
+> 
+> 
+> 
+> ### * <FOOTER>
+> ###
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  4.116 0.048 4.164 0 0 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

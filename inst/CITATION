@@ -1,0 +1,24 @@
+citHeader("To cite glmertree in publications use")
+
+citEntry(entry = "TechReport",
+  title        = "Detecting Treatment-Subgroup Interactions in Clustered Data with Generalized Linear Mixed-Effects Model Trees",
+  author       = personList(as.person("Marjolein Fokkema"), 
+		   as.person("Niels Smits"), 
+		   as.person("Achim Zeileis"), 
+		   as.person("Torsten Hothorn"), 
+		   as.person("Henk Kelderman")),
+  institution  = "Working Papers in Economics and Statistics, Research Platform Empirical
+  		  and Experimental Economics, Universit\\\"at Innsbruck",
+  year         = "2015",
+  type         = "Working Paper",
+  number       = "2015-10",
+  month        = "September",
+  url	       = "http://EconPapers.RePEc.org/RePEc:inn:wpaper:2015-10",
+  
+  textVersion  = 
+  paste("Marjolein Fokkema, Niels Smits, Achim Zeileis, Torsten Hothorn, Henk Kelderman (2015).",
+	"Detecting Treatment-Subgroup Interactions in Clustered Data with Generalized Linear Mixed-Effects Model Trees.",
+ 	"Working Paper 2015-10.",
+ 	"Working Papers in Economics and Statistics, Research Platform Empirical and Experimental Economics, Universitaet Innsbruck.",
+	"URL http://EconPapers.RePEc.org/RePEc:inn:wpaper:2015-10"),
+)
