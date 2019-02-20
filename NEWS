@@ -1,3 +1,24 @@
+
+Changes in Version 0.1-2
+
+  o Functions glmertree() and lmertree() now take offset arguments.
+  
+  o Argument ranefstart of functions glmertree() and lmertree() can now be 
+    set to TRUE. As a result, the random effects will be estimated
+    before fitting the tree in the first iteration. This may yield better 
+    results when random effects are expected to be substantial.
+
+  o Functions glmertree() and lmertree() now take cluster argument, an optional 
+    vector with cluster IDs to be employed for clustered covariances in the parameter 
+    stability tests.
+
+  o Bugs fixed: Argument dfsplit is now passed correctly to tree fitting functions,
+    additional arguments are now passed correctly to (g)lmer().	.
+
+  o Arguments "lmer.control" in lmertree() and "glmer.control" in glmertree()
+    are now actually passed to lmer() and glmer() internally.
+ 
+  
 Changes in Version 0.1-1
 
   o First CRAN release of the "glmertree" package for fitting generalized linear

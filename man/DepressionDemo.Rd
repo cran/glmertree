@@ -26,7 +26,7 @@ A data frame containing 150 observations on 6 variables:
   \item{duration}{numeric. Continuous partitioning variable (range: 1-17, 
     M = 6.97, SD = 2.90).}
   \item{depression_bin}{factor. Binarized treatment outcome variable 
-    (0 = recovered, 1 = not recovered.}
+    (0 = recovered, 1 = not recovered).}
 }}
 
 
@@ -37,7 +37,7 @@ characterized three subgroups with differences in treatment effects. The
 be accounted for. The treatment outcome is an index of depressive symptomatology. 
 }
 
-\seealso{\code{\link{lmertree}}}
+\seealso{\code{\link{lmertree}}, \code{\link{glmertree}}}
 
 \examples{
 \donttest{
