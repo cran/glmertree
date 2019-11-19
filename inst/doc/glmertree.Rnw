@@ -1,12 +1,12 @@
 \documentclass[nojss]{jss}
 
-%\VignetteIndexEntry{Detecting Treatment-Subgroup Interactions with Generalized Linear Mixed-Effects Model Trees}
+%\VignetteIndexEntry{Fitting Generalized Linear Mixed-Effects Model Trees}
 %\VignetteDepends{glmertree}
 %\VignetteKeywords{mixed-effects model trees, recursive partitioning, decision trees}
 %\VignettePackage{glmertree}
 
 %% packages
-\usepackage{thumbpdf,lmodern}
+\usepackage{thumbpdf,lmodern,placeins}
 
 \title{Fitting Generalized Linear Mixed-Effects Model Trees}
 \Shorttitle{Generalized Linear Mixed-Effects Model Trees}
@@ -14,7 +14,7 @@
 \Plainauthor{Marjolein Fokkema, Achim Zeileis}
 
 \Abstract{
-This vignette briefly introduces the \pkg{glmertree} package for fitting a wide range of generalized linear mixed-effects model trees (GLMM trees or glmertrees). In hands-on (artificial) examples, emphasis is given to the special cases of fitting GLMM trees with constant fits in the terminal nodes and detecting treatment-subgroup interactions in clustered data. 
+This vignette introduces the \pkg{glmertree} package for fitting generalized linear mixed-effects model trees (GLMM trees or glmertrees). In hands-on examples based on artificial datasets, emphasis is given to three special cases of fitting GLMM trees: trees with constant fits in the terminal nodes (Section~\hyperref[sec:regression_trees]{\ref{sec:regression_trees}}), detection of treatment-subgroup interactions (Section~\hyperref[sec:treatment_subgroups]{\ref{sec:treatment_subgroups}}), and subgroup detection in longitudinal growth curve models (Section~\hyperref[sec:growth_curves]{\ref{sec:growth_curves}}). 
 }
 
 \Keywords{recursive partitioning, mixed-effects model trees, decision trees}
@@ -52,11 +52,11 @@ options(width = 70, prompt = "R> ", continue = "+  ")
 
 \section{Introduction}
 
-Generalized linear mixed-effects model trees (GLMM trees or glmertrees) have recently been proposed by \cite{FokkySmit18} for detecting treatment-subgroup interactions in clustered datasets. Using a hands-on (artificial) example, this vignette describes how to fit such GLMM trees: Section 3 will describe how to assess main and interaction effects of a categorical variable (treatment) on a continuous response (treatment outcome). But first, Section 2 will describe how to fit (G)LMM trees with constant fits in the terminal nodes. The \proglang{R} package \pkg{glmertree} can be used to detect predictors and moderators in a wide range of generalized linear mixed-effects models.    
+Generalized linear mixed-effects model trees (GLMM trees or glmertrees) have initially been proposed by \cite{FokkySmit18} for detecting treatment-subgroup interactions in clustered datasets. However, GLMM trees may be used to address a wider range of research questions. Using hands-on examples based on artificial datasets, this vignette describes how to fit GLMM trees. Section~\hyperref[sec:regression_trees]{\ref{sec:regression_trees}} shows how to fit (G)LMM trees with constant fits in the terminal nodes on clustered (multilevel) data. Section~\hyperref[sec:treatment_subgroups]{\ref{sec:treatment_subgroups}} shows how to assess main and interaction effects of a categorical variable (treatment) on a continuous response (treatment outcome) on clustered data. Section~\hyperref[sec:growth_curves]{\ref{sec:growth_curves}} shows how subgroups can be detected with respect to the parameters of a growth curve model. These are just examples; package \pkg{glmertree} can be used to detect predictors and moderators in a wide range of GLMMs-type models.    
 
-GLMM trees estimate a global random-effects model, using all training observations. The fixed-effects model is estimated locally: the dataset is partitoned with respect to additional covariates or partitioning variables and a fixed-effects model is estimated in each cell of the partition. The \pkg{glmertree} package makes use of the \pkg{partykit} package \citep{HothyZeil15} to find the partition and the \pkg{lme4} package \citep{BateyMeac15} to fit the mixed-effects model.
+The GLMM tree model is composed of global and local parts: The global model is composed of the random-effects terms and using all observations. The local model is composed of the fixed-effects terms, which are estimated locally: the observations in a dataset are partitoned with respect to additional covariates (a.k.a. partitioning variables) and a separate fixed-effects model is estimated in each cell of the resulting partition. Package \pkg{glmertree} employs package \pkg{partykit} \citep{HothyZeil15} to find the partition and package \pkg{lme4} \citep{BateyMeac15} to estimate the mixed-effects model.
 
-The current stable release version of the package from the Comprehensive \proglang{R} Archive Network (CRAN) can be installed via:
+The current stable release version of package \pkg{glmertree} can be installed from the Comprehensive \proglang{R} Archive Network (CRAN) as follows:
 %
 <<eval = FALSE, echo = TRUE>>=
 install.packages("glmertree")
@@ -73,98 +73,120 @@ After installation, the package can be loaded as follows:
 <<eval = FALSE, echo = TRUE>>=
 library("glmertree")
 @
+%
+The main functions in package \pkg{glmertree} are \code{lmertree()} for continuous outcome variables, and \code{glmertree()} for binary or count outcome variables. Both functions require specification of a \code{formula} and \code{data} argument, as will also be illustrated in the examples below. The various methods that are available to plot and print the fitted models and to extract further information will also be shown in the examples below. 
 
-The main functions in the \pkg{glmertree} package are \code{lmertree()}, for continuous outcome variables, and \code{glmertree()}, for binary or count outcome variables. In what follows, we will focus on the special cases of fitting mixed-effects trees with constant fits in the terminal nodes to clustered data and detection of treatment-subgroup interactions in clustered data.
+For both main functions, the \code{formula} argument specifies the model formula, which is composed of a left- and right-hand side: the left-hand side specifies the response variable, followed by a tilde (\code{~}). The right-hand side comprises three parts: the predictors for the node-specific model (comprising fixed effects only, with coefficients that are allowed to differ over subgroups), the global model (comprising random and/or fixed effects, for which coefficients are estimated globally, using all observations) and the potential partitioning variables. The three parts of the right-hand side are separated by vertical bars: 
+\newline
+\newline
+%
+\code{response ~ node-specific predictors | global predictors | partitioning variables}
+%
 
 
-\section{Fitting (G)LMM trees with constant fits in the terminal nodes}
+\section{Fitting a mixed-model tree with constant fits}
+\label{sec:regression_trees}
 
-For this example, we will make use of an artificially generated dataset of $N = 3,739$ young people who received treatment at one of 13 mental-health service providers. Potential predictor variables are demographic variables and case characteristics. The response variable is a treatment outcome, as measured by a mental-health difficulties score at follow-up, corrected for the baseline assessment, where higher values relect poorer treatment outcome. The dataset includes two continuous covariates (\code{age} and \code{impact}); four binary covariates (\code{gender}, \code{emotional}, \code{autism} and \code{conduct}), an indicator for service provider (\code{cluster\_id}) and a continuous variable reflecting treatment outcome (\code{outcome}):
+For this example, we will make use of the artificially generated \code{MHserviceDemo} dataset, containing data on $N = \Sexpr{nrow(MHserviceDemo)}$ young people receiving treatment at one of \Sexpr{length(unique(MHserviceDemo$cluster_id))} mental-health service providers. The response variable is (\code{outcome}), a continuous variable representing treatment outcome, as measured by a mental-health difficulties score at follow-up, corrected for the baseline assessment, with higher values reflecting poorer treatment outcome. Potential predictor variables are demographic variables and case characteristics: two continuous (\code{age} and \code{impact}) and four binary covariates (\code{gender}, \code{emotional}, \code{autism} and \code{conduct}). The cluster indicator (\code{cluster\_id}) is an indicator for the mental-health service provider. The data can be loaded as follows:
 %
 <<echo = TRUE, eval = TRUE>>=
 data("MHserviceDemo", package = "glmertree")
 summary(MHserviceDemo)
 @
 
-The main functions in the \pkg{glmertree} package are \code{lmertree()}, for continuous outcome variables, and \code{glmertree()}, for binary or count outcome variables. Both functions require the user to specify at least two arguments: \code{formula} and \code{data}. 
+The response is a continuous variable, so we employ function \code{lmertree()}. In the model formula, we specify \code{outcome} as the response variable, followed by a tilde. Next, we specify the node-specific model, which comprises only an intercept in this case, because we want to identify subgroups which differ on their value of the response variable. Next, we specify the predictor for the global model. We only want to account for possible outcome differences between the service providers, so we specify a random intercept with respect to the \code{cluster_id} variable. Finally, we specify the demographic variables and case characteristic as the potential partitioning variables: 
 
-With the left hand side of the model formula (preceding the tilde symbol), we specify the outcome variable. The right hand side consists of three parts, separated by vertical bars: The first part specifies the subgroup-specific fixed-effect model, which consists only of an intercept in this example; the second part specifies the random effects and the third part specifies the potential partitioning variables:
-%
 <<echo = TRUE, eval = TRUE>>=
-lmmt <- lmertree(outcome ~ 1 | cluster_id | age + gender + emotional + 
-                 autism + impact + conduct, data = MHserviceDemo)
+MH_tree <- lmertree(outcome ~ 1 | cluster_id | age + gender + emotional + 
+                      autism + impact + conduct, data = MHserviceDemo)
 @
-%
-We specified only a single variable in the random-effects part, resulting in estimation of a random intercept with respect to \code{cluster_id}. More complex random effects can also be specified: for example, specifying the random-effects part as \code{(1 + age | cluster)} would yield a model with a random intercept as well as a random slope for age with respect to cluster. The brackets are necessary to protect the vertical bars in the formulation of the random effects.
 
-Alternatively, using the \code{glmertree()} function, a tree may be fitted to binary (\code{family = binomial}, default) or count response variables (\code{family = poisson}). Therefore, a binomial GLMM tree for a dichotomized response could be obained by:
-%
-<<eval = FALSE, echo = TRUE>>=
-glmmt <- glmertree(factor(outcome > 0) ~ 1 | cluster_id | age + gender + 
-                  emotional + autism + impact + conduct, 
-                data = MHserviceDemo, family = "binomial")
+Note that we specified \code{cluster_id} as a predictor variable for the global model, in order to estimate arandom intercept with respect to \code{cluster_id}. We used short-hand notation for \code{(1|cluster_id)}; because function \code{lmertree} and \code{glmertree} assume a single random intercept term, by default, which is specified through providing the cluster indicator only.
+
+More complex random-effects structures can be specified with the customary formulation employed in package \pkg{lme4}. For example, if we would want to account for a global linear fixed effect of age, we can incorporate it in the specification of the global model as follows (results not presented or discussed further):
+
+<<echo = TRUE, eval = FALSE>>=
+MH_tree2 <- lmertree(outcome ~ 1 | age + (1 | cluster_id) | gender + 
+                       emotional + autism + impact + conduct, 
+                     data = MHserviceDemo)
 @
-%
+
+Note that we used the round brackets around \code{(1|cluster_id)} to protect the vertical bars separating the global predictors from the node-specific predictors and potential partitioning variables. 
+
+Alternatively, using the \code{glmertree()} function, a tree may be fitted to binary (\code{family = binomial}, default) or count response variables (\code{family = poisson}). Therefore, a binomial GLMM tree for a dichotomized response could be obained by (results not presented or discussed further):
+
+<<eval = FALSE, echo = TRUE>>=
+MHserviceDemo$outcome_bin <- factor(MHserviceDemo$outcome > 0)
+MH_gtree <- glmertree(outcome_bin ~ 1 | cluster_id | age + gender + 
+                        emotional + autism + impact + conduct, 
+                      data = MHserviceDemo, family = "binomial")
+@
+
 Using the \code{plot} method, we can plot the resulting tree and random effects:
-%
+
 <<eval = FALSE, echo = TRUE>>=
-plot(lmmt)
+plot(MH_tree)
 @
+
 %
 \begin{figure}[t!]
 \centering
 \setkeys{Gin}{width=0.8\textwidth}
 <<eval = TRUE, echo = FALSE, fig = TRUE, width = 9, height = 7>>=
-plot(lmmt, which = "tree")
+plot(MH_tree, which = "tree")
 @
-\caption{\label{fig:tree_1} Linear mixed-effects model tree.}
+\caption{\label{fig:tree_1} LMM tree for predicting treatment outcome.}
 \end{figure}
+%
+
+By using argument \code{which}, we could have specified which part of the model should be plotted; by default, \code{which = "all"} the tree as well as the random effects are plotted. 
+
+The plotted tree is depicted in Figure~\ref{fig:tree_1}. In every inner node of the plotted tree, the splitting variable and corresponding $p$-value from the parameter stability test is reported. To control for multiple testing, the $p$-values are Bonferroni corrected, by default. This can be turned off by adding \code{bonferroni = FALSE} to the function call, which yields a less conservative criterion for the parameter stability tests, but may increase the likelihood of overfitting. The significance level $\alpha$ equals .05 by default, but a different value may be specified by including \code{alpha = .01} in the function call, for example.  
+
+The Tree in Figure~\ref{fig:tree_1} shows the distribution of the observated values of the response in each of the terminal nodes. Four subgroups were found: terminal node 3 indicates that for female patients with lower age, the higher values for the response (i.e., poorer outcomes) were observed. Slightly better treatment outcomes are observed in terminal node 4 (females with higher age) and node 6 (males not presenting with emotional disorder). The best treatment outcomes are observed in node 7 (males presenting with emotional disorder).  
+
+Random-effects predictions are plotted in Figure~\ref{fig:ranef_1}. On average, patients at service provider 3 appear to have higher response variable values (poorer outcomes), while patients at service provider 10 appear to have more favorable outcomes.
 %
 \begin{figure}[t!]
 \centering
 \setkeys{Gin}{width=0.5\textwidth}
 <<echo = FALSE, results = hide, fig = TRUE>>=
-plot(lmmt, which = "ranef")
+plot(MH_tree, which = "ranef")
 @
-\caption{\label{fig:ranef_1} Random effects.}
+\caption{\label{fig:ranef_1} Predicted random effects predictions for the different service providers.}
 \end{figure}
 %
-Using the argument \code{which}, we can also specify which part of the model should be plotted: \code{which = "tree"} plots only the tree, \code{which = "ranef"} plots only the predicted random effects and \code{which = "all"} (the default) plots the tree as well as the random effects. 
 
-The plotted tree is depicted in Figure~\ref{fig:tree_1}. In every inner node of the plotted tree, the splitting variable and corresponding $p$-value from the parameter stability test is reported. To control for multiple testing, the $p$-values are Bonferroni corrected, by default. This can be turned off by adding \code{bonferroni = FALSE} to the function call, yielding a less conservative criterion for the parameter stability tests, but note that this will increase the likelihood of overfitting. The significance level $\alpha$ equals .05 by default, but a different value, say for example .01, can be specified by including \code{alpha = .01} in the function call.  
-
-The plotted tree shows that there are five subgroups: node 3 indicates that for patients with lower age and no emotional disorder, as well as for patients with higher age and autistic disorder, somewhat higher values for the response are observed. Thus, for these patients, poorer treatment outcomes are predicted. Somewhat better treatment outcomes are observed for those with lower age, an emotional disorder and female gender, and for those with higher age and no autistic disorder. The best treatment outcomes are observed among those with lower age, emotional disorder and male gender.  
-
-The predicted random effects are plotted in Figure~\ref{fig:ranef_1}. On average, patients at service provider 12 appear to have poorer outcomes, while patients at service provider 3 appear to have more favorable outcomes.
-
-To obtain numerical results, \code{print}, \code{coef} and \code{ranef} methods are available (results omitted):
+To obtain numerical results, \code{print}, \code{coef}, code{fixef}, \code{ranef} and \code{VarCorr} methods are available (results omitted):
 %
 <<echo = TRUE, eval = FALSE>>=
-print(lmmt)
-coef(lmmt)
-ranef(lmmt)
+print(MH_tree)
+coef(MH_tree)
+fixef(MH_tree)
+ranef(MH_tree)
+VarCorr(MH_tree)
 @
 %
 To obtain predicted values, the \code{predict} method can be used: 
 %
 <<echo = TRUE, eval = TRUE>>=
-predict(lmmt, newdata = MHserviceDemo[1:10,])
+predict(MH_tree, newdata = MHserviceDemo[1:10,])
 @
 %
-When \code{newdata} is not specified, predictions for the training observations are returned, by default. Random effects can be excluded from the predictions by adding \code{re.form = NA}. This is useful, for example, when \code{newdata} is specified, but the new observations do not have a cluster indicator or are from new clusters:
+If the \code{newdata} argument is not specified, predictions for the training observations are returned, by default. Also by default, the predictions are based on both random- and fixed-effects. Random effects can be excluded from the predictions by adding \code{re.form = NA}. This is useful, for example, when \code{newdata} specifies new observations whichare not part of a cluster from the training data (i.e., are from a 'new' cluster):
 %
 <<echo = TRUE, eval = TRUE>>=
-predict(lmmt, newdata = MHserviceDemo[1:10, -7], re.form = NA)
+predict(MH_tree, newdata = MHserviceDemo[1:10, -7], re.form = NA)
 @
 
 
 \subsection{Inspecting residuals}
 
-Residuals of the fitted GLMM tree can be obtained with the \code{residuals} method. This can be useful for assessing potential misspecification of the model (e.g., heteroscedasticity):
+Residuals of the fitted mixed-effects tree can be obtained with the \code{residuals} method. Residuals can be used for assessing potential misspecification of the model or violation of assumptions (e.g., heteroscedasticity):
 %
 <<eval = FALSE, echo = TRUE>>=
-resids <- residuals(lmmt)
-preds <- predict(lmmt)
+resids <- residuals(MH_tree)
+preds <- predict(MH_tree)
 plot(MHserviceDemo$cluster_id, resids)
 scatter.smooth(preds, resids)
 @
@@ -173,107 +195,135 @@ scatter.smooth(preds, resids)
 \centering
 \setkeys{Gin}{width=0.49\textwidth}
 <<eval = TRUE, echo = FALSE, fig = TRUE>>=
-resids <- residuals(lmmt)
-preds <- predict(lmmt)
+resids <- residuals(MH_tree)
+preds <- predict(MH_tree)
 plot(MHserviceDemo$cluster_id, resids, xlab = "Cluster", ylab = "Residuals")
 @
 <<eval = TRUE, echo = FALSE, fig = TRUE>>=
 scatter.smooth(preds, resids, xlab = "Predicted values", ylab = "Residuals")
 @
-\caption{\label{fig:residuals_1} Residuals of the fitted linear mixed-effects model tree.}
+\caption{\label{fig:residuals_1} Residuals of the fitted linear mixed-effects model tree in Figure~\ref{fig:tree_1}.}
 \end{figure}
 %
-The plotted residuals are depicted in Figure~\ref{fig:residuals_1}. The first plot does not indicate substantial variation in error variances across levels of the random effects. The second plot of fitted values against residuals also does not reveal a pattern indicating model misspecification.
+The plotted residuals are depicted in Figure~\ref{fig:residuals_1}. The left panel indicates some differences in residual variances across the levels of \code{cluster_id}, but these differences were not statistically significant (when tested with functions \code{bartlett.test()} or \code{fligner.test()}). The right panel of in Figure~\ref{fig:residuals_1} indicates no pattern of association between fitted values and residuals.
 
 
-
+\FloatBarrier
 \section{Detecting treatment-subgroup interactions in clustered data}
+\label{sec:treatment_subgroups}
 
-The model in the terminal nodes can easily be extended to accomodate additional predictor variables. This may be particularly helpful when the interest is in the detection of moderators. For example, in the detection of treatment-subgroup interactions, where the effect of treatment on the response variable may be moderated by one or more additional covariates. To illustrate, we will use an artificial motivating dataset from \cite{FokkySmit18}, which can be recreated using the code provided in Appendix~\ref{app}, or can be loaded as follows: 
+In this example, we extend the model for the terminal nodes to accomodate a predictor variable: an indicator for treatment. Including predictor variables in the node-specific model may be particularly helpful when the interest is in detecting moderators. For example, in the detection of treatment-subgroup interactions where the effect of treatment may be moderated by one or more additional covariates. To illustrate, we will use the artificial motivating dataset from \cite{FokkySmit18}, which can be recreated using the code provided in Appendix~\ref{app}, or can be loaded as follows: 
 %
 <<echo = TRUE, eval = TRUE>>=
 data("DepressionDemo", package = "glmertree")
 summary(DepressionDemo)
 @
 %
-The dataset includes seven variables: A continuous response variable (\code{depression}), a predictor variable for the linear model (\code{treatment}), three potential partitioning variables (\code{age}, \code{anxiety}, \code{duration}), an indicator for cluster (\code{cluster}) and a binarized response variable (\code{depression_bin}).
+The dataset includes seven variables: A continuous response variable (\code{depression}), a predictor variable for the linear model (\code{treatment}), three potential partitioning variables (\code{age}, \code{anxiety}, \code{duration}), an indicator for cluster (\code{cluster}) and a binarized response variable (\code{depression\_bin}).
 
-With the left hand side of the model formula (preceding the tilde symbol), we specify the outcome variable. The right hand side consists of three parts, separated by vertical bars: The first part specifies the predictor variable(s) of the (generalized) linear model, the second part specifies the random effects and the third part specifies the potential partitioning variables:
-%
-<<eval = TRUE, echo = TRUE>>=
-lmm_tree <- lmertree(depression ~ treatment | cluster |
-  age + duration + anxiety, data = DepressionDemo)
-@
-%
-Note that in the example above, the partitioning variables are continuous, but (ordered) categorical partitioning variables may also be specified. Also, we specified only a single variable in the random-effects part, resulting in estimation of a random intercept with respect to \code{cluster}. More complex random effects can also be specified: for example, specifying the random-effects part as \code{(1 + age | cluster)} would yield a model with a random intercept as well as a random slope for age with respect to cluster. The brackets are necessary to protect the vertical bars in the formulation of the random effects.
+We fit a tree to the continuous response as follows: 
 
-Alternatively, using the \code{glmertree()} function, a tree may be fitted to binary (\code{family = binomial}, default) or count response variables (\code{family = poisson}). Therefore, a binomial GLMM tree for the dichotomized response \code{depression_bin} could be obained by:
-%
 <<eval = TRUE, echo = TRUE>>=
-glmm_tree <- glmertree(depression_bin ~ treatment | cluster |
-  age + duration + anxiety, data = DepressionDemo, family = binomial)
+lmmt <- lmertree(depression ~ treatment | cluster | age + 
+                   duration + anxiety, data = DepressionDemo)
 @
-%
-Using the \code{plot} method, we can plot the resulting tree and random effects:
-%
+
+The left-hand side of the model formula (preceding the tilde symbol) specified the response variable (\code{depression}). The right-hand side of the model formula comprises three parts, separated by vertical bars: The first part specifies the predictor variable(s) of the node specific (G) LMM (\code{treatment}, in this example). The second part specifies the predictors of the global model (comprising only a random intercept with respect to \code{cluster}, in this example). The third part specifies the potential partitioning variables. In this example, all partitioning variables are continuous, but (ordered) categorical partitioning variables can also be specified. 
+
+We specified only a single variable for the global model, resulting in estimation of a random intercept with respect to \code{cluster}. By default, if only a single variable is specified for the global model, a random intercept with respect to the specified variable will be estimated. More complex random effects can be specified using the customary formulation employed in \pkg{lme4}. For example, we could specify a global model comprising a correlated random intercept and slope of \code{age}, both estimated with respect to \code{cluster}:  
+
 <<eval = FALSE, echo = TRUE>>=
-plot(lmm_tree)
+depression ~ treatment | (age + (1 + age | cluster)) | age + 
+  duration + anxiety
 @
 
+Note that we included a fixed effect for \code{age} in the global model, as is customary when specifying a random effect. Note also that we used round brackets in order to protect the vertical bars in the formulation of the (global) random effects.
+
+We could also encounter nested multilevel structures, for example when we have patients from treatment centers nested within geographical areas. Using the indicators for treatment center and geographical areas (e.g., \code{center} and \code{area}), we could have specified random intercept terms for \code{center}, nested within \code{area}:
+
+<<eval = TRUE, echo = TRUE>>=
+depression ~ treatment | (1|center/area) | age + duration + anxiety
+@
+
+Using the \code{plot} method, we can plot the resulting tree and random effects:
+
+<<eval = FALSE, echo = TRUE>>=
+plot(lmmt)
+@
+
+%
 \begin{figure}[t!]
 \centering
 \setkeys{Gin}{width=0.8\textwidth}
 <<eval = TRUE, echo = FALSE, fig = TRUE, width = 9, height = 7>>=
-plot(lmm_tree, which = "tree")
+plot(lmmt, which = "tree")
 @
-\caption{\label{fig:tree} Linear mixed-effects model tree.}
+\caption{\label{fig:tree} Linear mixed-effects model tree with treatment-subgroup interactions.}
 \end{figure}
+%
+
+The plotted tree is depicted in Figure~\ref{fig:tree}. In every inner node of the plotted tree, the splitting variable and corresponding $p$-value from the parameter stability test is reported. To control for multiple testing, the $p$-values are Bonferroni corrected, by default.
+
+The plotted tree in Figure~\ref{fig:tree} shows that there are three subgroups with differential treatment effectiveness: node 3 indicates that for patients with lower duration and lower anxiety, Treatment 1 leads to lower post-treatment depression. Node 4 indicates that for patients with lower duration and higher anxiety, both treatments yield more or less the same expected outcome. Node 5 indicates, that for patients with higher duration, Treatment 2 leads to lower post-treatment depression.
 
 \begin{figure}[t!]
 \centering
 \setkeys{Gin}{width=0.5\textwidth}
 <<echo = FALSE, results = hide, fig = TRUE>>=
-plot(lmm_tree, which = "ranef")
+plot(lmmt, which = "ranef")
 @
-\caption{\label{fig:ranef} Random effects.}
+\caption{\label{fig:ranef} Random effects for the linear mixed-effects model tree in Figure~\ref{fig:tree}.}
 \end{figure}
-
-Using the argument \code{which}, we can also specify which part of the model should be plotted: \code{which = "tree"} plots only the tree, \code{which = "ranef"} plots only the predicted random effects and \code{which = "all"} (the default) plots the tree as well as the random effects. 
-
-The plotted tree is depicted in Figure~\ref{fig:tree}. In every inner node of the plotted tree, the splitting variable and corresponding $p$-value from the parameter stability test is reported. To control for multiple testing, the $p$-values are Bonferroni corrected, by default. This can be turned off by adding \code{bonferroni = FALSE} to the function call, yielding a less conservative criterion for the parameter stability tests, but note that this will increase the likelihood of overfitting. The significance level $\alpha$ equals .05 by default, but a different value, say for example .01, can be specified by including \code{alpha = .01} in the function call.  
-
-The plotted tree shows that there are three subgroups with differential treatment effectiveness: node 3 indicates that for patients with lower duration and lower anxiety, Treatment 1 leads to lower post-treatment depression. Node 4 indicates that for patients with lower duration and higher anxiety, both treatments yield more or less the same expected outcome. Node 5 indicates, that for patients with higher duration, Treatment 2 leads to lower post-treatment depression.
 
 The predicted random effects are plotted in Figure~\ref{fig:ranef}. On average, patients from cluster 10 have somewhat higher expected post-treatment depression scores, whereas patients from cluster 4 have somewhat lower expected post-treatment depression scores.
 
-To obtain numerical results, \code{print}, \code{coef} and \code{ranef} methods are available:
+Alternatively, we can request caterpillar plots of the estimated node-specific coefficients through specifying \code{which = "tree.coef"}:
 %
-<<echo = TRUE, eval = TRUE>>=
-print(lmm_tree)
-coef(lmm_tree)
-ranef(lmm_tree)
+<<eval = FALSE, echo = TRUE>>=
+plot(lmmt, which = "tree.coef")
+@
+%
+\begin{figure}[t!]
+\centering
+\setkeys{Gin}{width=0.8\textwidth}
+<<eval = TRUE, echo = FALSE, fig = TRUE, width = 6, height = 3>>=
+plot(lmmt, which = "tree.coef")
+@
+\caption{\label{fig:tree.coef} Estimated node-specific fixed effects with error bars.}
+\end{figure}
+%
+The plotted results depict the node-specific parameter estimated with error bars ($\pm 1.96$ times the standard error). Note that these standard errors do not account for the searching of the tree structure and are likely too small, but they do allow for gauging the precision of the estimated parameters. 
+
+To obtain numerical results, \code{print}, \code{coef}, \code{fixef}, \code{ranef}, and \code{VarCorr} methods are available (results omitted):
+%
+<<echo = TRUE, eval = FALSE>>=
+print(lmmt)
+coef(lmmt)
+fixef(lmmt)
+ranef(lmmt)
+VarCorr(lmmt)
 @
 %
 To obtain predicted values, the \code{predict} method can be used: 
 %
 <<echo = TRUE, eval = TRUE>>=
-predict(lmm_tree, newdata = DepressionDemo[1:7,])
+predict(lmmt, newdata = DepressionDemo[1:7,])
 @
 %
 When \code{newdata} is not specified, predictions for the training observations are returned, by default. Random effects can be excluded from the predictions by adding \code{re.form = NA}. This is useful, for example, when \code{newdata} is specified, but the new observations do not have a cluster indicator or are from new clusters:
 %
 <<echo = TRUE, eval = TRUE>>=
-predict(lmm_tree, newdata = DepressionDemo[1:7, -3], re.form = NA)
+predict(lmmt, newdata = DepressionDemo[1:7, -3], re.form = NA)
 @
 
 
 \subsection{Inspecting residuals}
 
-Residuals of the fitted GLMM tree can be obtained with the \code{residuals} method. This can be useful for assessing potential misspecification of the model (e.g., heteroscedasticity):
+Residuals of the fitted (G)LMM tree can be obtained with the \code{residuals} method. This can be useful for assessing potential misspecification of the model (e.g., heteroscedasticity):
 %
 <<eval = FALSE, echo = TRUE>>=
-resids <- residuals(lmm_tree)
-preds <- predict(lmm_tree)
+resids <- residuals(lmmt)
+preds <- predict(lmmt)
 plot(factor(DepressionDemo$cluster), resids)
 scatter.smooth(preds, resids)
 @
@@ -282,19 +332,161 @@ scatter.smooth(preds, resids)
 \centering
 \setkeys{Gin}{width=0.49\textwidth}
 <<eval = TRUE, echo = FALSE, fig = TRUE>>=
-resids <- residuals(lmm_tree)
-preds <- predict(lmm_tree)
+resids <- residuals(lmmt)
+preds <- predict(lmmt)
 plot(factor(DepressionDemo$cluster), resids, xlab = "Cluster", ylab = "Residuals")
 @
 <<eval = TRUE, echo = FALSE, fig = TRUE>>=
 scatter.smooth(preds, resids, xlab = "Predicted values", ylab = "Residuals")
 @
-\caption{\label{fig:residuals} Residuals of the fitted linear mixed-effects model tree.}
+\caption{\label{fig:residuals} Residuals of the fitted linear mixed-effects model tree in Figure~\ref{fig:tree}.}
 \end{figure}
 %
-The plotted residuals are depicted in Figure~\ref{fig:residuals}. The first plot does not indicate substantial variation in error variances across levels of the random effects. The second plot of fitted values against residuals also does not reveal a pattern indicating model misspecification.
+The plotted residuals are depicted in Figure~\ref{fig:residuals}. The left panel indicates some variation in error variances across levels of the random effects, but it appears these differences are not statistivally significant: 
+%
+<<>>=
+fligner.test(resids ~ DepressionDemo$cluster)
+bartlett.test(resids ~ DepressionDemo$cluster)
+@
+%
+The right panel of Figure~\ref{fig:residuals} shows fitted values against residuals and also does not reveal a pattern indicating model misspecification.
 
-\pagebreak
+
+
+
+
+\section{Detecting subgroups with different growth trajectories}
+\label{sec:growth_curves}
+
+An artificially generated, longitudinal dataset is included in package \pkg{glmertree} and can be loaded as follows: 
+%
+<<echo = TRUE, eval = TRUE>>=
+data("GrowthCurveDemo", package = "glmertree")
+dim(GrowthCurveDemo)
+names(GrowthCurveDemo)
+@
+%
+The dataset contains 1250 repeated measurements from \Sexpr{length(unique(GrowthCurveDemo$person))} individuals. The data is in long format and the response was measured at five timepoints for each individual. The dataset contains \Sexpr{ncol(GrowthCurveDemo)} variables: A continuous response variable (\code{y}), a predictor variable for the linear model (\code{time}, taking values 0 through 4), time-invariant potential partitioning variables (\code{x1} through \code{x8}), and an indicator for person (\code{person}). 
+
+The data were generated so that \code{x1}, \code{x2} and \code{x3} are true partitioning variables. Furthermore, \code{x1} is a binary variable, while all other potential partitioning variables follow a normal distribution with $\mu = 0$ and $\sigma = 5$. Potential partitioning variables were generated so as to be uncorrelated. Random intercepts and slopes were generated so that the intercept and slope values for persons vary around their node-specific means, following a normal distribution with $\mu = 0$ and $\sigma = \sqrt{2}$ for the intercept and $\sigma = \sqrt{.4}$ for the slope. Errors were uncorrelated and followed a normal distribution with $\mu = 0$ and $\sigma = \sqrt{5}$.
+
+The default fitting procedure as employed by functions \code{lmertree()} and \code{glmertree()} assume potential predictor variables are measured on the observation level. In this example, potential partitioning variables are measured on the cluster level (i.e., time-invariant covariates) and the observation-level stability tests will likely have inflated type-I error. We can account for the level of the partitioning variables through specification of the \code{cluster} argument. As a result, parameter stability tests will be performed on the cluster instead of the observation level:
+%
+<<eval=TRUE, echo=TRUE>>=
+gc_tree <- lmertree(y ~ time | person | x1 + x2 + x3 + x4 + x5 + x6 + 
+                      x7 + x8, cluster = person, data = GrowthCurveDemo)
+@
+%
+The first part of the formula (\code{y ~  time}) regresses the response on time. The second part (\code{| person |}) specifies that a random intercept should be estimated with respect to \code{person}. The third part (\code{x1 + ... + x8}) specifies the potential partitioning variables. Using the cluster-level stability tests, we obtained a tree with four subgroups (terminal nodes):
+%
+<<eval=TRUE, echo=TRUE>>=
+width(gc_tree$tree)
+@
+%
+Employing the default observation-level stability tests would have yielded a tree with more (possibly spurious) subgroups:
+%
+<<eval=TRUE, echo=TRUE>>=
+gc_obs_tree <- lmertree(y ~ time | person | x1 + x2 + x3 + x4 + x5 + 
+                          x6 + x7 + x8, data = GrowthCurveDemo)
+width(gc_obs_tree$tree)
+@
+%
+We plot the growth-curve tree using the \code{plot} method:
+%
+<<eval=FALSE, echo=TRUE>>=
+plot(gc_tree, which = "tree", fitted = "marginal")
+@
+%
+Note that we additionally specified \code{which = "tree"}, to obtain a plot of the tree only, and \code{fitted = "marginal"}. The latter specified that the fitted values (represented by the red lines in the terminal nodes) should be computed by fixing all remaining (fixed- an random-effects) predictor variables at their means (or majority class, for categorical predictors). By default, \code{fitted = "combined"} yields fitted values, computed based on the observed values of the remaining (random and fixed-effects) predictor variables. We employed the marginal approach here, as this yields straight lines plotted in the terminal nodes, which may better reflect the average trajectories.  
+%
+\begin{figure}[t!]
+\centering
+\setkeys{Gin}{width=0.8\textwidth}
+<<eval = TRUE, echo = FALSE, fig = TRUE, width = 9, height = 7>>=
+plot(gc_tree, which = "tree", fitted = "marginal")
+@
+\caption{\label{fig:gc_tree} Linear mixed-effects model tree with growth curve models in the terminal nodes.}
+\end{figure}
+%
+The resulting plot is depicted in Figure~\ref{fig:gc_tree}. The red lines in the terminal nodes represent the average trajectory within the terminal nodes. The dots represent the observed data values.
+
+The plot reveals that the true partitioning variables (\code{x1}, \code{x2} and \code{x3}) were selected for splitting. The fitted models in the terminal nodes (red lines) reveal a decrease in the response variable over time for the left-most subgroup, and an increase for the right-most subgroup. The curves in the two middle subgroups are rather flat, indicating no change over time. We can also print the values of the estimated coefficients in the terminal nodes:
+%
+<<eval=FALSE, echo=TRUE>>=
+plot(gc_tree, type = "simple", which = "tree")
+@
+%
+\begin{figure}[t!]
+\centering
+\setkeys{Gin}{width=0.8\textwidth}
+<<eval = TRUE, echo = FALSE, fig = TRUE, width = 9, height = 7>>=
+plot(gc_tree, type = "simple", which = "tree")
+@
+\caption{\label{fig:gc_tree_simple} Linear mixed-effects model tree with estimated coefficients printed in the terminal nodes.}
+\end{figure}
+%
+The tree in Figure~\ref{fig:gc_tree_simple} reveals effects of time relatively close to zero for nodes 4 and 6. We can also plot the coefficients with error bars:
+%
+<<eval=FALSE, echo=TRUE>>=
+plot(gc_tree, which = "tree.coef")
+@
+%
+\begin{figure}[t!]
+\centering
+\setkeys{Gin}{width=0.8\textwidth}
+<<eval = TRUE, echo = FALSE, fig = TRUE, width = 6, height = 4>>=
+plot(gc_tree, which = "tree.coef")
+@
+\caption{\label{fig:gc_tree.coefs} Caterpillar plots of estimated coefficients for each of the terminal nodes.}
+\end{figure}
+%
+The standard errors used for creating the error bars in Figure~\ref{fig:gc_tree.coefs} do not account for the searching of the tree sturcture and may be too small. However, the overlapping error bars for the effect of time in nodes 6 and 4 indicate a non-significant difference between the effects of time in these nodes.
+%
+The observed data points in Figure~\ref{fig:gc_tree} indicate that the individual observations show substantial variation around the estimated fixed effects. To obtain an estimate of the random effects and residual variances, we can use the \code{VarCorr} method:
+%
+<<eval=TRUE, echo=TRUE>>=
+varcor <- VarCorr(gc_tree)
+varcor
+@
+%
+WE can use these variances to obtain an estimate of the intraclass correlation (ICC):
+%
+<<eval=TRUE, echo=TRUE>>=
+res_var <- attr(varcor, "sc")^2
+int_var <- as.numeric(varcor$person)
+ICC <- int_var / (res_var + int_var)
+ICC
+@
+%
+The value of the ICC indicates that about \Sexpr{round(100*ICC, digits = 2)} percent of variance in the response is accounted for by inter-individual variation.
+
+
+\subsection{Adding a random slope of time}
+
+Earlier, we specified a model formula with only a random intercept and thus did not account for possible variation between persons in the effect of time, within terminal nodes. To account for such differences we can incorporate a random slope of time into the model formula:
+%
+<<eval = TRUE, echo = TRUE>>=
+form_s <- formula(paste0("y ~ time | (1 + time | person) | ", 
+                         paste0("x", 1:8, collapse = " + ")))
+form_s
+@
+%
+Again, we fit the tree:
+%
+<<eval=TRUE, echo=TRUE>>=
+gc_tree_s <- lmertree(form_s, cluster = person, data = GrowthCurveDemo)
+@
+%
+In this case, we obtained the same tree structure with or without estimating random slopes (Figure~\ref{fig:gc_tree}). This need not necessarily be the case with other datasets. At the very least, the estimated random effects can provide us with additional information about variation due to between-person differences in initial levels and growth over time:
+%
+<<>>=
+VarCorr(gc_tree_s)
+@
+%
+Compared to the fitted model with random intercepts only, we see that the residual variance decreased somewhat.
+
+
+\newpage
 
 \bibliography{glmertree}
 

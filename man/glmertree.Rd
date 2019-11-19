@@ -3,8 +3,6 @@
 \alias{glmertree}
 
 \alias{print.lmertree}
-\alias{plot.lmertree}
-\alias{coef.lmertree}
 \alias{ranef.lmertree}
 \alias{logLik.lmertree}
 \alias{model.frame.lmertree}
@@ -16,8 +14,6 @@
 \alias{VarCorr.lmertree}
 
 \alias{print.glmertree}
-\alias{plot.glmertree}
-\alias{coef.glmertree}
 \alias{ranef.glmertree}
 \alias{logLik.glmertree}
 \alias{model.frame.glmertree}
@@ -41,12 +37,12 @@
 lmertree(formula, data, weights = NULL, cluster = NULL, 
   ranefstart = NULL, offset = NULL, joint = TRUE, 
   abstol = 0.001, maxit = 100, dfsplit = TRUE, verbose = FALSE, 
-  plot = FALSE, lmer.control = lmerControl(), \dots)
+  plot = FALSE, REML = TRUE, lmer.control = lmerControl(), \dots)
 
 glmertree(formula, data, family = "binomial", weights = NULL,
   cluster = NULL, ranefstart = NULL, offset = NULL, joint = TRUE,
   abstol = 0.001, maxit = 100, dfsplit = TRUE, verbose = FALSE, 
-  plot = FALSE, glmer.control = glmerControl(), \dots)
+  plot = FALSE, nAGQ = 1L, glmer.control = glmerControl(), \dots)
 }
 
 \arguments{
@@ -91,9 +87,15 @@ glmertree(formula, data, family = "binomial", weights = NULL,
     random-effects model be printed for every iteration of the estimation?} 
   \item{plot}{Should the tree be plotted at every iteration of the estimation?
     Note that selecting this option slows down execution of the function.}
+  \item{REML}{logical scalar. Should the fixef-effects estimates be chosen to 
+    optimize the REML criterion (as opposed to the log-likelihood)? Will be 
+    passed to funtion \code{lmer()}. See \code{\link[lme4]{lmer}} for details.} 
+  \item{nAGQ}{integer scalar. Specifies the number of points per axis for evaluating 
+    the adaptive Gauss-Hermite approximation to the log-likelihood, to be passed
+    to function \code{glmer()}. See \code{\link[lme4]{glmer}} for details.} 
   \item{lmer.control, glmer.control}{list. An optional list with control
     parameters to be passed to \code{lmer()} and \code{glmer()}, respectively.
-    See \code{\link[lme4]{lmerControl}} and \code{\link[lme4]{glmerControl}} for details.} 
+    See \code{\link[lme4]{lmerControl}} for details.} 
   \item{\dots}{Additional arguments to be passed to \code{lmtree()} or \code{glmtree()}.
     See \code{\link[partykit]{mob_control}} documentation for details.}
 }
@@ -166,25 +168,27 @@ Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2018).
 }
 
 \seealso{\code{\link[lme4]{lmer}}, \code{\link[lme4]{glmer}},
-  \code{\link[partykit]{lmtree}}, \code{\link[partykit]{glmtree}}}
+  \code{\link[partykit]{lmtree}}, \code{\link[partykit]{glmtree}}, 
+  \code{\link{plot.lmertree}}, \code{\link{plot.glmertree}}}
 
 \examples{
+\donttest{
 ## artificial example data
 data("DepressionDemo", package = "glmertree")
 
 ## fit normal linear regression LMM tree for continuous outcome
 lt <- lmertree(depression ~ treatment | cluster | age + anxiety + duration,
   data = DepressionDemo)
-\donttest{print(lt)}
+print(lt)
 plot(lt, which = "all") # default behavior, may also be "tree" or "ranef" 
 coef(lt)
-\donttest{ranef(lt)}
-\donttest{predict(lt, type = "response") # default behavior, may also be "node"}
+ranef(lt)
+predict(lt, type = "response") # default behavior, may also be "node"
 predict(lt, re.form = NA) # excludes random effects, see ?lme4::predict.merMod
-\donttest{residuals(lt)}
-\donttest{VarCorr(lt) # see lme4::VarCorr}
+residuals(lt)
+VarCorr(lt) # see lme4::VarCorr
 
-\donttest{
+
 ## fit logistic regression GLMM tree for binary outcome
 gt <- glmertree(depression_bin ~ treatment | cluster | age + anxiety + duration,
   data = DepressionDemo)
@@ -198,9 +202,4 @@ residuals(gt)
 VarCorr(gt) # see lme4::VarCorr
 }
 }
-
-% \donttest{} statements for lmertree added in order to fix noLD warning on 
-% CRAN since new lme4 version of Feb. 6 2019. All other tests pass.
-% TODO: fix this in a better way.
-
 \keyword{tree}

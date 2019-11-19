@@ -15,8 +15,8 @@ citEntry(entry = "Article",
   url	       = "http://link.springer.com/article/10.3758/s13428-017-0971-x",
   
   textVersion  = 
-  paste("MArjolein Fokkema, Niels Smits, Achim Zeileis, Torsten Hothorn, Henk Kelderman (2018).",
-	"partykit: A Modular Toolkit for Recursive Partytioning in R.",
+  paste("Marjolein Fokkema, Niels Smits, Achim Zeileis, Torsten Hothorn, Henk Kelderman (2018).",
+	"Detecting Treatment-Subgroup Interactions in clustered Data With Generalized Linear Mixed-Effects Model Trees.",
  	"Behavior Research Methods 50(5), 2016-2034.",
 	"URL http://link.springer.com/article/10.3758/s13428-017-0971-x")
 )
