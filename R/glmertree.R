@@ -9,12 +9,17 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   ## remember call
   cl <- match.call()
   
-  ## check if data is complet, print warning if not: 
-  if (nrow(data) != sum(stats::complete.cases(data))) {
-    warning("'data' contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
+  ## check if data is complete
+  all_vars <- if (any(grepl(".", as.character(formula), fixed = TRUE))) 
+    names(data) else all.vars(formula)
+  if (nrow(data[ , all_vars]) != sum(stats::complete.cases(data[ , all_vars]))) {
+    warning("some variables have missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
+    data_has_missings <- TRUE
+  } else {
+    data_has_missings <- FALSE
   }
   
-  ## process offset:
+  ## process offset
   q_offset <- substitute(offset)
   if (!is.null(q_offset)) {
     offset <- eval(q_offset, data)
@@ -47,17 +52,38 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   ff <- Formula::as.Formula(formula)
   tf <- formula(ff, lhs = 1L, rhs = c(1L, 3L))
   if (length(attr(ff, "rhs")[[2L]]) == 1L) {
-    rf <- (. ~ (1 | id))[[3L]]
-    rf[[2L]][[3L]] <- attr(ff, "rhs")[[2L]]
-    attr(ff, "rhs")[[2L]] <- rf
+    if (attr(ff, "rhs")[[2L]] == 1) {
+      no_rf <- TRUE # then global fixed intercept was requested
+    } else {
+      no_rf <- FALSE
+      rf <- (. ~ (1 | id))[[3L]]
+      rf[[2L]][[3L]] <- attr(ff, "rhs")[[2L]]
+      attr(ff, "rhs")[[2L]] <- rf
+    }
   }
   if (joint) {
     rf <- formula(ff, lhs = 1L, rhs = 1L)
     rf <- update(rf, . ~ .tree / .)
     rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
                   lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
+    # ## If rf contains a one, estimate intercept globally
+    # ## TODO: Check what happens if a random formula containing 1 was specified
+    # if ("1" %in% as.character(attr(ff, "rhs")[[2L]])) {
+    #   no_rf <- TRUE
+    #   rf <- update(rf, . ~ . -.tree)
+    # } else {
+    #   no_rf <- FALSE
+    # }
   } else {
     rf <- formula(ff, lhs = 1L, rhs = 2L)
+  }
+  
+  ## process data
+  if (data_has_missings) {
+    old_N <- nrow(data)
+    data <- data[complete.cases(data[ , all_vars]), ]
+    warning(paste0("New sample size is N = ", nrow(data), " (old sample size was N = ", old_N, ")."))
+    
   }
   
   ## initialization
@@ -86,13 +112,27 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
     
     iteration <- iteration + 1L
     
+    ## prevent .tree variable being selected as part var if dot was used formula
+    if (iteration > 2L) data$.tree <- NULL
+    
     ## fit tree
-    if (is.null(q_cluster)) {
-      tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
-                     dfsplit = dfsplit, ...)
+    if (is.null(cl$vcov)) { ## Allow for use of ML estimation:
+      if (is.null(q_cluster)) {
+        tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                       dfsplit = dfsplit, ...)
+      } else {
+        tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                       cluster = .cluster, dfsplit = dfsplit, ...)
+      }
     } else {
-      tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
-                     cluster = .cluster, dfsplit = dfsplit, ...)
+      if (is.null(q_cluster)) {
+        tree <- glmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                        dfsplit = dfsplit, family = "gaussian", ...)
+      } else {
+        tree <- glmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                        cluster = .cluster, dfsplit = dfsplit, family = "gaussian", 
+                        ...)
+      }
     }
     
     if (plot) plot(tree, main = paste("Iteration", iteration))
@@ -129,8 +169,13 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
                       REML = REML, offset = offset, control = lmer.control)          
         }
       }
-      b <- structure(lme@beta, .Names = names(fixef(lme)))
-      b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
+      if (length(tree) == 1L) { 
+        b <- structure(lme@beta, .Names = names(fixef(lme)))
+        b[names(b) %in% names(tree[[1]]$node$info$object$coefficients)] <- 0        
+      } else {
+        b <- structure(lme@beta, .Names = names(fixef(lme)))
+        b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
+      }
       data$.ranef <- suppressWarnings(suppressMessages(
         predict(lme, newdata = data, newparams = list(beta = b))))
     } else {
@@ -152,6 +197,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
     oldloglik[2] <- oldloglik[1]
     oldloglik[1] <- newloglik
     if (verbose) print(newloglik)
+
   }
   
   ## collect results
@@ -190,9 +236,14 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   ## remember call
   cl <- match.call()
   
-  ## check if data is complet, print warning if not: 
-  if (nrow(data) != sum(stats::complete.cases(data))) {
-    warning("data contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
+  ## check if data is complete
+  all_vars <- if (any(grepl(".", as.character(formula), fixed = TRUE))) 
+    names(data) else all.vars(formula)
+  if (nrow(data[ , all_vars]) != sum(stats::complete.cases(data[ , all_vars]))) {
+    warning("'data' contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
+    data_has_missings <- TRUE
+  } else {
+    data_has_missings <- FALSE
   }
   
   ## process offset:
@@ -239,6 +290,13 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
                   lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
   } else {
     rf <- formula(ff, lhs = 1L, rhs = 2L)
+  }
+  
+  ## process data
+  if (data_has_missings) {
+    old_N <- nrow(data)
+    data <- data[complete.cases(data[ , all_vars]), ]
+    warning(paste0("New sample size is N = ", nrow(data), " (old sample size was N = ", old_N, ")."))
   }
   
   ## initialization
@@ -311,9 +369,14 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
           glme <- glmer(rf, data = data, family = family, weights = .weights,
                         nAGQ = nAGQ, offset = offset, control = glmer.control)
         }
-      }       
-      b <- structure(glme@beta, .Names = names(fixef(glme)))
-      b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
+      }
+      if (length(tree) == 1L) { 
+        b <- structure(glme@beta, .Names = names(fixef(glme)))
+        b[names(b) %in% names(tree[[1]]$node$info$object$coefficients)] <- 0        
+      } else {
+        b <- structure(glme@beta, .Names = names(fixef(glme)))
+        b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
+      }
       data$.ranef <- suppressWarnings(suppressMessages(
         predict(glme, newdata = data, type = "link", newparams = list(beta = b))))
     } else {
@@ -361,9 +424,9 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
 
 
 
-fixef.lmertree <- coef.lmertree <- fixef.glmertree <- 
-  coef.glmertree <- function(object, which = "tree", 
-                             drop = FALSE, ...) {
+fixef.lmertree <- coef.lmertree <- 
+  fixef.glmertree <- coef.glmertree <- 
+  function(object, which = "tree", drop = FALSE, ...) {
   merMod_type <- ifelse(inherits(object, "lmertree"), "lmer", "glmer")
   if (which == "tree") { 
     coefs <- coef(object$tree, drop = FALSE)
@@ -398,12 +461,13 @@ fixef.lmertree <- coef.lmertree <- fixef.glmertree <-
 
 
 
-VarCorr.lmertree <- VarCorr.glmertree <- function(object, ...) {
-  merMod_type <- ifelse(inherits(object, "lmertree"), "lmer", "glmer")
-  VarCorr(object[[merMod_type]], ...)
+VarCorr.lmertree <- VarCorr.glmertree <- function(x, sigma = 1, ...) {
+  merMod_type <- ifelse(inherits(x, "lmertree"), "lmer", "glmer")
+  VarCorr(x[[merMod_type]], sigma = sigma, ...)
 }
 
 
+# ## Old version of plot lmertree function
 # plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE, 
 #                                             type = "extended", ...) {    
 # 
@@ -478,14 +542,10 @@ get_merMod_SEs <- function(object, which = "tree", global_intercept = TRUE) {
 }
 
 
-plot.glmertree <- plot.lmertree <- function(x, which = "all", # c("tree", "ranef", "tree.coef", "global.coef", "all") 
-                                              ask = TRUE,
-                                              type = "extended", 
-                                              observed = TRUE, 
-                                              fitted = "combined", 
-                                              tp_args = list(), 
-                                              drop_terminal = TRUE, 
-                                              terminal_panel = NULL, ...) {
+plot.glmertree <- plot.lmertree <- function(
+  x, which = "all", # c("tree", "ranef", "tree.coef", "global.coef", "all") 
+  ask = TRUE, type = "extended", observed = TRUE, fitted = "combined", 
+  tp_args = list(), drop_terminal = TRUE, terminal_panel = NULL, ...) {
   
   merMod_type <- ifelse(inherits(x, "lmertree"), "lmer", "glmer")
   ff <- Formula::as.Formula(x$formula)
@@ -493,10 +553,25 @@ plot.glmertree <- plot.lmertree <- function(x, which = "all", # c("tree", "ranef
     if (attr(ff, "rhs")[[1]] == 1L && which != "tree.coef") {
       plot(x$tree, type = type)
     } else if (type == "simple") {
+      ## overwrite tree coefs with lmer coefs if joint estimation was used
+      if (x$joint) {
+        node_ids <- unique(x$tree$fitted[["(fitted)"]])
+        lt_node <- as.list(x$tree$node)
+        coefs <- coef(x, which = "tree")
+        for (i in node_ids) {
+          lt_node[[i]]$info$coefficients <- coefs[as.character(i), ]
+        }
+        x$tree$node <- as.partynode(lt_node)
+      }
       FUN <- simple_terminal_func
+      if (!is.null(x$call$cluster)) {
+        ## TODO: If cluster argument was invoked, print level II sample sizes in nodes
+        ## TODO: Add argument to plot function to turn this on or off 
+      }
       plot(x$tree, drop_terminal = drop_terminal,
            terminal_panel = node_terminal_glmertree, 
-           tp_args = list(FUN = FUN, align = "right"))
+           tp_args = list(FUN = FUN, align = "right"),
+           ...)
     } else if (type == "extended") {
       mf <- model.frame(x)
       if (length(attr(ff, "rhs")[[2L]]) > 1L) {
@@ -535,6 +610,12 @@ plot.glmertree <- plot.lmertree <- function(x, which = "all", # c("tree", "ranef
           list(xlim = range(x[subscripts], ux[subscripts], lx[subscripts], 
                             finite = TRUE))
         }
+        ## Add leading zeros to get better ordering in dotplot
+        long_coefs$node <- paste(
+          "node", gsub(" ", "0", sapply(long_coefs$node, function(x) substring(x, nchar(x)-2+1))))
+        ## dotplot orders factors from high to low, so adjust ordering
+        long_coefs$node <- ordered(long_coefs$node, 
+                                   levels = sort(unique(long_coefs$node), decreasing = TRUE))
         print(lattice::dotplot(node ~ values | ind, data = long_coefs,
                       lx = long_coefs$lower, ux = long_coefs$upper,
                       prepanel = prepanel, panel = panel, as.table = TRUE,
@@ -552,6 +633,8 @@ plot.glmertree <- plot.lmertree <- function(x, which = "all", # c("tree", "ranef
           node_ids <- x$tree$fitted[["(fitted)"]]
           re.form <- if (fitted == "marginal") NA else NULL
           if (fitted == "marginal") {
+            ## Compute marginal predictions (i.e., fix predictor variables not 
+            ##   being plotted to sample mean (or mode) 
             fitted_values <- matrix(nrow = length(node_ids), 
                                     ncol = length(vars_to_plot),
                                     dimnames = list(rownames(mf), vars_to_plot))
@@ -560,10 +643,10 @@ plot.glmertree <- plot.lmertree <- function(x, which = "all", # c("tree", "ranef
               remaining_lm_vars <- lm_vars[lm_vars != varname]
               if (length(lm_vars > 1L)) {
                 for (i in remaining_lm_vars) {
-                  if (class(x$data[, i]) == "numeric") {
+                  if (inherits(x$data[, i], c("numeric", "integer"))) {
                     ## set all values to mean value:
                     newdata[, i] <- mean(x$data[, i])
-                  } else if (class(x$data[, i]) == "factor") {
+                  } else if (inherits(x$data[, i], "factor")) {
                     ## set all values to most common class:
                     ux <- unique(x$data[, i])
                     newdata[, i] <- ux[which.max(tabulate(match(x$data[, i], ux)))]
@@ -592,6 +675,10 @@ plot.glmertree <- plot.lmertree <- function(x, which = "all", # c("tree", "ranef
           fitmean = ifelse(fitted == "none", FALSE, TRUE),
           observed = observed))
         if (is.null(terminal_panel)) terminal_panel <- node_glmertree
+        if (!is.null(x$call$cluster)) {
+          ## TODO: If cluster argument was invoked, print level II sample sizes in nodes
+          ## TODO: Add argument to plot function to turn this on or off 
+        }
         plot(x$tree, terminal_panel = terminal_panel, 
              drop_terminal = drop_terminal, tp_args = tp_args, ...)
       }
@@ -643,6 +730,7 @@ plot.glmertree <- plot.lmertree <- function(x, which = "all", # c("tree", "ranef
       grDevices::devAskNewPage(ask = orig_devAsk)
     }
   }
+  if (which == "tree.coef") invisible(long_coefs)
 }
 
 

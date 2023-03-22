@@ -5,13 +5,15 @@ import("grid")
 
 importFrom("utils", "globalVariables", "installed.packages")
 importFrom("graphics", "plot")
-importFrom("stats", "coef", "logLik", "model.frame", "predict", "terms", "update", "residuals", "as.formula")
+importFrom("stats", "coef", "logLik", "model.frame", "predict", "terms", "update", "residuals", "as.formula", "complete.cases")
 importFrom("grDevices", "devAskNewPage")
 importFrom("graphics", "boxplot", "hist")
 
+
 export(
   "lmertree",
-  "glmertree"
+  "glmertree",
+  "betamertree"
 )
 
 S3method("print", "lmertree")
@@ -38,3 +40,16 @@ S3method("as.party", "lmertree")
 S3method("as.party", "glmertree")
 S3method("VarCorr", "lmertree")
 S3method("VarCorr", "glmertree")
+
+S3method("print", "betamertree")
+S3method("plot", "betamertree")
+S3method("coef", "betamertree")
+S3method("fixef", "betamertree")
+S3method("ranef", "betamertree")
+S3method("logLik", "betamertree")
+S3method("model.frame", "betamertree")
+S3method("predict", "betamertree")
+S3method("residuals", "betamertree")
+S3method("terms", "betamertree")
+S3method("as.party", "betamertree")
+S3method("VarCorr", "betamertree")

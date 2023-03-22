@@ -54,8 +54,7 @@ lt <- lmertree(outcome ~ 1 | cluster_id | age + gender + emotional +
                autism + impact + conduct, data = MHserviceDemo)
 plot(lt)
 
-MHserviceDemo$outcome_bin <- factor(MHserviceDemo$outcome > 0)
-gt <- glmertree(outcome_bin ~ 1 | cluster_id | age + gender + 
+gt <- glmertree(factor(outcome > 0) ~ 1 | cluster_id | age + gender + 
                 emotional + autism + impact + conduct, 
                 data = MHserviceDemo, family = "binomial")
 plot(gt)

@@ -1,7 +1,7 @@
 Package: glmertree
 Title: Generalized Linear Mixed Model Trees
-Date: 2019-11-19
-Version: 0.2-0
+Date: 2023-03-23
+Version: 0.2-3
 Authors@R: c(person(given = "Marjolein", family = "Fokkema", 
     role = c("aut", "cre"), email = "M.Fokkema@fsw.leidenuniv.nl"), 
   person(given = "Achim", family = "Zeileis", role = "aut", 
@@ -10,16 +10,16 @@ Description: Recursive partitioning based on (generalized) linear mixed models
     (GLMMs) combining lmer()/glmer() from 'lme4' and lmtree()/glmtree() from 
     'partykit'. The fitting algorithm is described in more detail in Fokkema,
     Smits, Zeileis, Hothorn & Kelderman (2018; <DOI:10.3758/s13428-017-0971-x>).
-Depends: R (>= 3.1.0), lme4, partykit (>= 1.0-4)
+Depends: R (>= 4.0.0), lme4, partykit (>= 1.0-4)
 Imports: graphics, stats, utils, Formula
-Suggests: vcd, lattice
+Suggests: vcd, lattice, betareg, glmmTMB
 LazyData: yes
 License: GPL-2 | GPL-3
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 NeedsCompilation: no
-Packaged: 2019-11-19 10:55:06 UTC; fokkemam
+Packaged: 2023-03-22 17:25:57 UTC; fokkemam
 Author: Marjolein Fokkema [aut, cre],
   Achim Zeileis [aut]
 Maintainer: Marjolein Fokkema <M.Fokkema@fsw.leidenuniv.nl>
 Repository: CRAN
-Date/Publication: 2019-11-19 18:30:05 UTC
+Date/Publication: 2023-03-22 18:00:02 UTC

@@ -1,22 +1,11 @@
-citHeader("To cite glmertree in publications use:")
-
-citEntry(entry = "Article",
-  title        = "Detecting Treatment-Subgroup Interactions in clustered Data With Generalized Linear Mixed-Effects Model Trees",
-  author       = personList(as.person("Marjolein Fokkema"),
-        as.person("Niels Smits"),
-        as.person("Achim Zeileis"),
-        as.person("Torsten Hothorn"),
-        as.person("Henk Kelderman")),
-  journal      = "Behavior Research Methods",
-  year         = "2018",
-  volume       = "50",
-  issue        = "5",
-  pages        = "2016-2034",
-  url	       = "http://link.springer.com/article/10.3758/s13428-017-0971-x",
-  
-  textVersion  = 
-  paste("Marjolein Fokkema, Niels Smits, Achim Zeileis, Torsten Hothorn, Henk Kelderman (2018).",
-	"Detecting Treatment-Subgroup Interactions in clustered Data With Generalized Linear Mixed-Effects Model Trees.",
- 	"Behavior Research Methods 50(5), 2016-2034.",
-	"URL http://link.springer.com/article/10.3758/s13428-017-0971-x")
+bibentry(bibtype = "Article",
+  title          = "Detecting Treatment-Subgroup Interactions in Clustered Data with Generalized Linear Mixed-Effects Model Trees",
+  author         = c(as.person("Marjolein Fokkema"), as.person("Niels Smits"), as.person("Achim Zeileis"), as.person("Torsten Hothorn"), as.person("Henk Kelderman")),
+  journal        = "Behavior Research Methods",
+  year           = "2018",
+  volume         = "50",
+  issue          = "5",
+  pages          = "2016-2034",
+  doi            = "10.3758/s13428-017-0971-x",
+  header         = "To cite glmertree in publications use:"
 )

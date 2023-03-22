@@ -44,7 +44,7 @@
 Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2018).
   \dQuote{Detecting Treatment-Subgroup Interactions in Clustered Data
   with Generalized Linear Mixed-Effects Model Trees}. Behavior Research 
-  Methods, 50(5), 2016-2034. \url{https://doi.org/10.3758/s13428-017-0971-x}
+  Methods, 50(5), 2016-2034. \doi{10.3758/s13428-017-0971-x}
 }
 
 

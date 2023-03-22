@@ -1,4 +1,29 @@
 
+Changes in Version 0.2-3
+
+  o Minor bug fixes.
+
+  o Experimental function betamertree added, for partitioning 
+    mixed-effects beta regression trees.
+
+
+
+Changes in Version 0.2-1
+
+  o Bug fix for missing data: Listwise deletion over all predictor,
+    response and partitioning variables is now applied. Otherwise, 
+    global and local parts of (g)lmertree model could be estimated 
+    based on a different sample size or an error could occur.
+
+  o Fixed bug: If dot was used in formula for specifying partitioning 
+    variables, tree fitting would pick up tree structure from previous
+    iteration. Fixed now.
+
+  o Fixed bug: When type = "simple" in call to function plot.(g)lmertree
+    is specified, further arguments are now passed correctly. 
+
+
+
 Changes in Version 0.2-0
 
   o Bug fix in predict method: Erroneous allocation of new observations
@@ -17,6 +42,7 @@ Changes in Version 0.2-0
   o New sections added to vignette, illustrating how mixed-effects 
     regression trees with constant fits and growth curve models in terminal
     nodes can be fitted.
+
 
 
 Changes in Version 0.1-2
@@ -39,6 +65,7 @@ Changes in Version 0.1-2
     are now actually passed to lmer() and glmer() internally.
  
   
+
 Changes in Version 0.1-1
 
   o First CRAN release of the "glmertree" package for fitting generalized linear

@@ -59,10 +59,10 @@ glmertree(formula, data, family = "binomial", weights = NULL,
     in \code{data} or a vector of length \code{nrow(data)}. If 
     \code{cluster = NULL} (the default), observation-level covariances 
     are employed in the parameter stability tests. If 
-    partitioning variables are measured on the cluster level, this will
-    likely yield spurious splits, which can be mitigated by specification 
-    of the cluster argument, which results in cluster-level covariances
-    being employed in the parameter stability tests.}
+    partitioning variables are measured on the cluster level, this can
+    be accounted for by specifying the name of the cluster argument here, 
+    as a result cluster-level covariances will be employed in the parameter 
+    stability tests.}
   \item{ranefstart}{\code{NULL} (the default), \code{TRUE}, or a numeric 
     vector of length \code{nrow(data)}. Specifies the offset to be used in 
     estimation of the first tree. \code{NULL} by default, yielding a zero offset 
@@ -87,14 +87,14 @@ glmertree(formula, data, family = "binomial", weights = NULL,
     random-effects model be printed for every iteration of the estimation?} 
   \item{plot}{Should the tree be plotted at every iteration of the estimation?
     Note that selecting this option slows down execution of the function.}
-  \item{REML}{logical scalar. Should the fixef-effects estimates be chosen to 
+  \item{REML}{logical scalar. Should the fixed-effects estimates be chosen to 
     optimize the REML criterion (as opposed to the log-likelihood)? Will be 
     passed to funtion \code{lmer()}. See \code{\link[lme4]{lmer}} for details.} 
   \item{nAGQ}{integer scalar. Specifies the number of points per axis for evaluating 
     the adaptive Gauss-Hermite approximation to the log-likelihood, to be passed
     to function \code{glmer()}. See \code{\link[lme4]{glmer}} for details.} 
   \item{lmer.control, glmer.control}{list. An optional list with control
-    parameters to be passed to \code{lmer()} and \code{glmer()}, respectively.
+    parameters to be passed to \code{lmer()} or \code{glmer()}, respectively.
     See \code{\link[lme4]{lmerControl}} for details.} 
   \item{\dots}{Additional arguments to be passed to \code{lmtree()} or \code{glmtree()}.
     See \code{\link[partykit]{mob_control}} documentation for details.}
@@ -164,7 +164,7 @@ The function returns a list with the following objects:
 Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2018).
   \dQuote{Detecting Treatment-Subgroup Interactions in Clustered Data
   with Generalized Linear Mixed-Effects Model Trees}. Behavior Research 
-  Methods, 50(5), 2016-2034. \url{https://doi.org/10.3758/s13428-017-0971-x}
+  Methods, 50(5), 2016-2034. \doi{10.3758/s13428-017-0971-x}
 }
 
 \seealso{\code{\link[lme4]{lmer}}, \code{\link[lme4]{glmer}},

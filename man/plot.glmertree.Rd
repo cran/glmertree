@@ -30,9 +30,9 @@
   \item{ask}{logical. Should user be asked for input, before a new figure
       is drawn?}
   \item{type}{character; \code{"extended"} (default) or \code{"simple"}.
-      \code{type = "extended"} yields a plotted tree with observed data and/or
+      \code{"extended"} yields a plotted tree with observed data and/or
       fitted means plotted in the terminal nodes; \code{"simple"} yields a 
-      plottedtree with the value of fixed and/or random effects coefficients 
+      plotted tree with the value of fixed and/or random effects coefficients 
       reported in the terminal nodes.}
   \item{observed}{logical. Should observed datapoints be plotted in the tree?
       Defaults to \code{TRUE}, \code{FALSE} is only supported for objects of 
@@ -41,36 +41,53 @@
       or \code{"none"}. Specifies whether and how fitted values should be 
       computed and visualized. Only used when predictor variables for the 
       node-specific (G)LMs were specified. If \code{"combined"}, fitted 
-      values will computed, based on the observed values of the remaining 
-      (random and fixed-effects) predictor variables, and their estimated
-      effects. If \code{"marginal"}, fitted values will be calculated, 
-      keeping all remaining variables (with random and/or fixed effects) 
-      fixed at their (population and sample) means (or majority class).} 
+      values will computed, using observed values of the remaining 
+      (random and fixed-effects) predictor variables, which can yield
+      very wiggly curves. If \code{"marginal"}, fitted values will be calculated, 
+      fixing all remaining predictor variables (with random and/or fixed effects) 
+      at the observed sample mean (or majority class).} 
   \item{tp_args}{list of arguments to be passed to panel generating function
       \code{node_glmertree}. See arguments \code{node_bivplot} in 
       \code{\link[partykit]{panelfunctions}}.}
   \item{drop_terminal}{logical. Should all terminal nodes be plotted at the 
       bottom of the plot?}
-  \item{terminal_panel}{an optional panel function to be passed to 
-      \code{plot.party()}. See \code{\link[partykit]{party-plot}} 
-      documentation for details.}
+  \item{terminal_panel}{an optional panel generating function to be passed to 
+      \code{plot.party()}, but will most likely be ignored. For passing 
+      arguments to the panel generating functions, use argument
+      \code{tp_args}. For using a custom panel generating function,
+      see Details.}
   \item{\dots}{Additional arguments to be passed to \code{plot.party()}.
       See \code{\link[partykit]{party-plot}} documentation for details.}
 }
 
   
 \details{
-  The caterpillar plot(s) for the local (node-specific) fixed effects (created 
-  when \code{which = "tree.coef"}) depict the estimated fixed-effects 
-  coefficients with 95\% confidence intervals, but these CIs do not account for
-  the searching of the tree structure and are therefore likely too narrow. 
-  There is currently no way to adjust CIs for searching of the tree structure,
-  but the CIs can be useful to obtain an indication of the variability 
+  If the node-specific model of the \code{(g)lmertree} object specified by 
+  argument \code{x} is an intercept-only model, observed data distributions
+  will be plotted in the terminal nodes of the tree (using 
+  \code{\link[partykit]{node_barplot}} (for categorical responses) or 
+  \code{\link[partykit]{node_boxplot}} (for numerical responses). Otherwise, 
+  fitted values will be plotted, in addition to observed datapoints, using a
+  function taking similar arguments as \code{\link[partykit]{node_bivplot}}.
+  
+  If \code{which = "tree.coef"}), caterpillar plot(s) are created for the local 
+  (node-specific) fixed effects. These depict the estimated fixed-effects 
+  coefficients with 95\% confidence intervals, but note that these CIs do not 
+  account for the searching of the tree structure and are therefore likely 
+  too narrow. There is currently no way to adjust CIs for searching of the tree 
+  structure, but the CIs can be useful to obtain an indication of the variability 
   of the coefficient estimates, not for statistical significance testing. 
   
-  The caterpillar plot(s) for the random effect (created if \code{which = "ranef"} 
-  or \code{"all"}) depict the predicted random effects with 95\% confidence 
-  intervals. See also \code{\link[lme4]{ranef}}.
+  If \code{which = "ranef"} or \code{"all"}, caterpillar plot(s) for the random 
+  effect(s) created, depicting the predicted random effects with 95\% confidence 
+  intervals. See also \code{\link[lme4]{ranef}} for more info. Note that the CIs
+  do not account for the searching of the tree structure and may be too narrow.
+  
+  If you want to specify custom panel generating functions, it might be best to
+  not use the plotting method for (g)lmertrees. Instead, extract the (g)lmtree from
+  the fitted (g)lmertree object (which is a list containing amongst other a 
+  \code{$tree} entry). On this tree, most of the customization options from 
+  \code{\link[partykit]{party-plot}} can then be applied.
   
   The code is still under development and might change in future versions.
 }
@@ -80,7 +97,7 @@
 Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2018).
   \dQuote{Detecting Treatment-Subgroup Interactions in Clustered Data
   with Generalized Linear Mixed-Effects Model Trees}. Behavior Research 
-  Methods, 50(5), 2016-2034. \url{https://doi.org/10.3758/s13428-017-0971-x}
+  Methods, 50(5), 2016-2034. \doi{10.3758/s13428-017-0971-x}
 }
 
 
