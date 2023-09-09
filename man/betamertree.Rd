@@ -32,7 +32,8 @@ betamertree(formula, data, family = NULL, weights = NULL, cluster = NULL,
     right-hand-side describing the regressors, random effects, and
     partitioning variables, respectively. For details see below.}
   \item{data}{data.frame to be used for estimating the model tree.}
-  \item{family}{currently not used.}
+  \item{family}{currently not used. The default beta distribution parameterization 
+    of package \code{betareg} is used, see also \code{?glmmTMB::beta_family.}}
   \item{weights}{numeric. An optional numeric vector of weights. Can be a 
     name of a column in data or a vector of length \code{nrow(data)}.}
   \item{cluster}{currently not used.}

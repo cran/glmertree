@@ -5,10 +5,11 @@ import("grid")
 
 importFrom("utils", "globalVariables", "installed.packages")
 importFrom("graphics", "plot")
-importFrom("stats", "coef", "logLik", "model.frame", "predict", "terms", "update", "residuals", "as.formula", "complete.cases")
-importFrom("grDevices", "devAskNewPage")
+importFrom("stats", "coef", "logLik", "model.frame", "predict", "terms", "update", 
+           "residuals", "as.formula", "complete.cases", "model.response", "qlogis", "weights")
+importFrom("grDevices", "devAskNewPage", "gray")
 importFrom("graphics", "boxplot", "hist")
-
+importFrom("stats", "model.matrix", "na.omit")
 
 export(
   "lmertree",

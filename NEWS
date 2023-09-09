@@ -1,3 +1,12 @@
+Changes in Version 0.2-4
+
+  o Additional arguments to lattice::dotplot can now be passed to 
+    plot.(g)lmertree.
+    
+  o Dedicated plotting function for partitioning growth curves has
+      been added, see which = "growth" in ?plot.(g)lmertree. 
+  
+  
 
 Changes in Version 0.2-3
 

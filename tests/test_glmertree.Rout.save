@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2023-02-08 r83782 ucrt) -- "Unsuffered Consequences"
+R version 4.3.1 (2023-06-16 ucrt) -- "Beagle Scouts"
 Copyright (C) 2023 The R Foundation for Statistical Computing
 Platform: x86_64-w64-mingw32/x64 (64-bit)
 
@@ -47,81 +47,46 @@ R> plot(lmm_tree, which = "tree")
 R> plot(lmm_tree, which = "ranef")
 $cluster
 
-R> print(lmm_tree)
-Linear mixed model tree
-
-Model formula:
-depression ~ treatment | age + duration + anxiety
-
-Fitted party:
-[1] root
-|   [2] duration <= 8
-|   |   [3] anxiety <= 10: n = 53
-|   |                (Intercept) treatmentTreatment 2 
-|   |                   7.500140             4.122083 
-|   |   [4] anxiety > 10: n = 54
-|   |                (Intercept) treatmentTreatment 2 
-|   |                  8.5914088            0.5212593 
-|   [5] duration > 8: n = 43
-|                (Intercept) treatmentTreatment 2 
-|                  11.087612            -4.546886 
-
-Number of inner nodes:    2
-Number of terminal nodes: 3
-Number of parameters per node: 2
-Objective function (residual sum of squares): 505.5055
-
-Random effects:
-$cluster
-   (Intercept)
-1  -0.30964409
-2  -0.34154568
-3  -0.06755141
-4  -0.57675658
-5  -0.15247281
-6  -0.08761704
-7   0.12905520
-8   0.22500904
-9   0.26125689
-10  0.92026647
-
-with conditional variances for "cluster" 
-R> coef(lmm_tree)
+R> round(coef(lmm_tree), digits = 6)
   (Intercept) treatmentTreatment 2
-3    7.500140            4.1220828
-4    8.591409            0.5212593
-5   11.087612           -4.5468861
-R> ranef(lmm_tree)
-$cluster
+3    7.500140             4.122083
+4    8.591409             0.521259
+5   11.087612            -4.546886
+R> round(ranef(lmm_tree)$cluster, digits = 6)
    (Intercept)
-1  -0.30964409
-2  -0.34154568
-3  -0.06755141
-4  -0.57675658
-5  -0.15247281
-6  -0.08761704
-7   0.12905520
-8   0.22500904
-9   0.26125689
-10  0.92026647
-
-with conditional variances for "cluster" 
-R> predict(lmm_tree, newdata = DepressionDemo[1:7, ])
-        1         2         3         4         5         6         7 
-10.777968 11.554672  7.158595  9.045117 11.280677  8.816418 11.883480 
-R> predict(lmm_tree, newdata = DepressionDemo[1:7, -3], re.form = NA)
-        1         2         3         4         5         6         7 
-11.087612 11.622223  7.500140  9.112668 11.622223  8.591409 11.622223 
-R> residuals(lmm_tree)[1:10]
-         1          2          3          4          5          6 
- 2.2220321  2.4453284 -0.1585945  0.9548832 -1.2806773  1.1835821 
-         7          8          9         10 
--1.8834799 -1.7711225  0.8008197  4.0766164 
-R> predict(lmm_tree)[1:10]
-        1         2         3         4         5         6         7 
-10.777968 11.554672  7.158595  9.045117 11.280677  8.816418 11.883480 
-        8         9        10 
- 8.771122  6.199180  6.923384 
+1    -0.309644
+2    -0.341546
+3    -0.067551
+4    -0.576757
+5    -0.152473
+6    -0.087617
+7     0.129055
+8     0.225009
+9     0.261257
+10    0.920266
+R> formatC(predict(lmm_tree, newdata = DepressionDemo[1:7, ]), format = "f", 
++          digits = 7)
+           1            2            3            4            5 
+"10.7779679" "11.5546716"  "7.1585945"  "9.0451168" "11.2806773" 
+           6            7 
+ "8.8164179" "11.8834799" 
+R> formatC(predict(lmm_tree, newdata = DepressionDemo[1:7, -3], re.form = NA),
++          format = "f", digits = 7)
+           1            2            3            4            5 
+"11.0876120" "11.6222230"  "7.5001402"  "9.1126682" "11.6222230" 
+           6            7 
+ "8.5914088" "11.6222230" 
+R> formatC(residuals(lmm_tree)[1:10], format = "f", digits = 7)
+           1            2            3            4            5 
+ "2.2220321"  "2.4453284" "-0.1585945"  "0.9548832" "-1.2806773" 
+           6            7            8            9           10 
+ "1.1835821" "-1.8834799" "-1.7711225"  "0.8008197"  "4.0766164" 
+R> formatC(predict(lmm_tree)[1:10], format = "f", digits = 7)
+           1            2            3            4            5 
+"10.7779679" "11.5546716"  "7.1585945"  "9.0451168" "11.2806773" 
+           6            7            8            9           10 
+ "8.8164179" "11.8834799"  "8.7711225"  "6.1991803"  "6.9233836" 
+R> 
 R> glmm_tree <- glmertree(depression_bin ~ treatment | 
 +                           cluster | age + duration + anxiety, data = DepressionDemo, 
 +                         family = binomial)
@@ -130,84 +95,46 @@ Loading required namespace: vcd
 R> plot(glmm_tree, which = "ranef")
 $cluster
 
-R> print(glmm_tree)
-Generalized linear mixed model tree
-
-Model formula:
-depression_bin ~ treatment | age + duration + anxiety
-
-Fitted party:
-[1] root
-|   [2] duration <= 8
-|   |   [3] anxiety <= 12: n = 80
-|   |                (Intercept) treatmentTreatment 2 
-|   |                  -1.996343             2.981996 
-|   |   [4] anxiety > 12: n = 27
-|   |                (Intercept) treatmentTreatment 2 
-|   |                  0.8738988           -0.4354536 
-|   [5] duration > 8: n = 43
-|                (Intercept) treatmentTreatment 2 
-|                   1.880583            -4.800147 
-
-Number of inner nodes:    2
-Number of terminal nodes: 3
-Number of parameters per node: 2
-Objective function (negative log-likelihood): 65.52692
-
-Random effects:
-$cluster
-   (Intercept)
-1  -0.28669119
-2  -0.27530257
-3   0.04737363
-4   0.05603413
-5  -0.10326861
-6  -0.18038146
-7   0.26866174
-8   0.23237000
-9   0.04446011
-10  0.17720620
-
-with conditional variances for "cluster" 
-R> coef(glmm_tree)
+R> round(coef(glmm_tree), digits = 6)
   (Intercept) treatmentTreatment 2
-3  -2.0405712            3.0486159
-4   0.8951042           -0.4461302
-5   1.9202595           -4.8921098
-R> ranef(glmm_tree)
-$cluster
+3   -2.040571             3.048616
+4    0.895104            -0.446130
+5    1.920259            -4.892110
+R> round(ranef(glmm_tree)$cluster, digits = 6)
    (Intercept)
-1  -0.28669119
-2  -0.27530257
-3   0.04737363
-4   0.05603413
-5  -0.10326861
-6  -0.18038146
-7   0.26866174
-8   0.23237000
-9   0.04446011
-10  0.17720620
-
-with conditional variances for "cluster" 
-R> predict(glmm_tree, newdata = DepressionDemo[1:7, ])
-         1          2          3          4          5          6 
-0.83665787 0.74181402 0.08981681 0.62160063 0.67540674 0.75537246 
-         7 
-0.74125561 
-R> predict(glmm_tree, newdata = DepressionDemo[1:7, -3], re.form = NA)
-        1         2         3         4         5         6         7 
-0.8721674 0.7326373 0.1150086 0.6103953 0.7326373 0.7099424 0.7326373 
-R> residuals(glmm_tree)[1:10]
-         1          2          3          4          5          6 
- 0.5972270  0.7728605 -0.4338419  0.9751487  0.8859348  0.7490585 
-         7          8          9         10 
- 0.7738343 -1.5001216 -0.2762165  2.0558798 
-R> predict(glmm_tree)[1:10]
-         1          2          3          4          5          6 
-0.83665787 0.74181402 0.08981681 0.62160063 0.67540674 0.75537246 
-         7          8          9         10 
-0.74125561 0.67540674 0.03742933 0.12083602 
+1    -0.286691
+2    -0.275303
+3     0.047374
+4     0.056034
+5    -0.103269
+6    -0.180381
+7     0.268662
+8     0.232370
+9     0.044460
+10    0.177206
+R> formatC(predict(glmm_tree, newdata = DepressionDemo[1:7, ]), format = "f", 
++          digits = 7)
+          1           2           3           4           5 
+"0.8366579" "0.7418140" "0.0898168" "0.6216006" "0.6754067" 
+          6           7 
+"0.7553725" "0.7412556" 
+R> formatC(predict(glmm_tree, newdata = DepressionDemo[1:7, -3], re.form = NA), 
++          format = "f", digits = 7)
+          1           2           3           4           5 
+"0.8721674" "0.7326373" "0.1150086" "0.6103953" "0.7326373" 
+          6           7 
+"0.7099424" "0.7326373" 
+R> formatC(residuals(glmm_tree)[1:10], format = "f", digits = 7)
+           1            2            3            4            5 
+ "0.5972270"  "0.7728605" "-0.4338419"  "0.9751487"  "0.8859348" 
+           6            7            8            9           10 
+ "0.7490585"  "0.7738343" "-1.5001216" "-0.2762165"  "2.0558798" 
+R> formatC(predict(glmm_tree)[1:10], format = "f", digits = 7)
+          1           2           3           4           5 
+"0.8366579" "0.7418140" "0.0898168" "0.6216006" "0.6754067" 
+          6           7           8           9          10 
+"0.7553725" "0.7412556" "0.6754067" "0.0374293" "0.1208360" 
 R> 
 > proc.time()
    user  system elapsed 
-   1.87    0.23    2.17 
+   3.64    0.51    4.28 

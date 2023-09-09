@@ -264,44 +264,50 @@ width(gc_obs_tree$tree)
 
 
 ###################################################
-### code chunk number 39: glmertree.Rnw:405-406
+### code chunk number 39: glmertree.Rnw:404-405 (eval = FALSE)
 ###################################################
-plot(gc_tree, which = "tree", fitted = "marginal")
+## plot(gc_tree, which = "growth")
 
 
 ###################################################
-### code chunk number 40: glmertree.Rnw:415-416 (eval = FALSE)
+### code chunk number 40: glmertree.Rnw:411-412
+###################################################
+plot(gc_tree, which = "growth")
+
+
+###################################################
+### code chunk number 41: glmertree.Rnw:421-422 (eval = FALSE)
 ###################################################
 ## plot(gc_tree, type = "simple", which = "tree")
 
 
 ###################################################
-### code chunk number 41: glmertree.Rnw:422-423
+### code chunk number 42: glmertree.Rnw:428-429
 ###################################################
 plot(gc_tree, type = "simple", which = "tree")
 
 
 ###################################################
-### code chunk number 42: glmertree.Rnw:430-431 (eval = FALSE)
+### code chunk number 43: glmertree.Rnw:436-437 (eval = FALSE)
 ###################################################
 ## plot(gc_tree, which = "tree.coef")
 
 
 ###################################################
-### code chunk number 43: glmertree.Rnw:437-438
+### code chunk number 44: glmertree.Rnw:443-444
 ###################################################
 plot(gc_tree, which = "tree.coef")
 
 
 ###################################################
-### code chunk number 44: glmertree.Rnw:447-449
+### code chunk number 45: glmertree.Rnw:453-455
 ###################################################
 varcor <- VarCorr(gc_tree)
 varcor
 
 
 ###################################################
-### code chunk number 45: glmertree.Rnw:454-458
+### code chunk number 46: glmertree.Rnw:460-464
 ###################################################
 res_var <- attr(varcor, "sc")^2
 int_var <- as.numeric(varcor$person)
@@ -310,7 +316,7 @@ ICC
 
 
 ###################################################
-### code chunk number 46: glmertree.Rnw:468-471
+### code chunk number 47: glmertree.Rnw:474-477
 ###################################################
 form_s <- formula(paste0("y ~ time | (1 + time | person) | ", 
                          paste0("x", 1:8, collapse = " + ")))
@@ -318,19 +324,19 @@ form_s
 
 
 ###################################################
-### code chunk number 47: glmertree.Rnw:476-477
+### code chunk number 48: glmertree.Rnw:482-483
 ###################################################
 gc_tree_s <- lmertree(form_s, cluster = person, data = GrowthCurveDemo)
 
 
 ###################################################
-### code chunk number 48: glmertree.Rnw:482-483
+### code chunk number 49: glmertree.Rnw:488-489
 ###################################################
 VarCorr(gc_tree_s)
 
 
 ###################################################
-### code chunk number 49: appendix1
+### code chunk number 50: appendix1
 ###################################################
 set.seed(123)
 treatment <- rbinom(n = 150, size = 1, prob = .5)
@@ -341,7 +347,7 @@ error <- rnorm(150, 0, 2)
 
 
 ###################################################
-### code chunk number 50: appendix2
+### code chunk number 51: appendix2
 ###################################################
 cluster <- error + rnorm(150, 0, 6)
 rand_int <- sort(rep(rnorm(10, 0, 1), each = 15))
@@ -351,7 +357,7 @@ cluster[order(cluster)] <- rep(1:10, each = 15)
 
 
 ###################################################
-### code chunk number 51: appendix3
+### code chunk number 52: appendix3
 ###################################################
 node3t1 <- ifelse(duration <= 8 & anxiety <= 10 & treatment == 0, -2, 0)
 node3t2 <- ifelse(duration <= 8 & anxiety <= 10 & treatment == 1, 2, 0)
@@ -360,7 +366,7 @@ node5t2 <- ifelse(duration > 8 & treatment == 1, -2.5, 0)
 
 
 ###################################################
-### code chunk number 52: appendix4
+### code chunk number 53: appendix4
 ###################################################
 depression <- round(9 + node3t1 + node3t2 + node5t1 + node5t2 +
   .4 * treatment + error + rand_int)
@@ -368,7 +374,7 @@ depression_bin <- factor(as.numeric(depression > 9))
 
 
 ###################################################
-### code chunk number 53: appendix5
+### code chunk number 54: appendix5
 ###################################################
 treatment <- factor(treatment, labels = c("Treatment 1", "Treatment 2"))
 DepressionDemo <- data.frame(depression, treatment, cluster,

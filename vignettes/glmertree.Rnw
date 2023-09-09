@@ -391,19 +391,25 @@ gc_obs_tree <- lmertree(y ~ time | person | x1 + x2 + x3 + x4 + x5 +
 width(gc_obs_tree$tree)
 @
 %
-We plot the growth-curve tree using the \code{plot} method:
+We can plot the growth-curve tree using the \code{plot} method:
 %
 <<eval=FALSE, echo=TRUE>>=
 plot(gc_tree, which = "tree", fitted = "marginal")
 @
 %
-Note that we additionally specified \code{which = "tree"}, to obtain a plot of the tree only, and \code{fitted = "marginal"}. The latter specified that the fitted values (represented by the red lines in the terminal nodes) should be computed by fixing all remaining (fixed- an random-effects) predictor variables at their means (or majority class, for categorical predictors). By default, \code{fitted = "combined"} yields fitted values, computed based on the observed values of the remaining (random and fixed-effects) predictor variables. We employed the marginal approach here, as this yields straight lines plotted in the terminal nodes, which may better reflect the average trajectories.  
+Note that we additionally specified \code{which = "tree"}, to obtain a plot of the tree only, and \code{fitted = "marginal"}. The latter specified that the fitted values (represented by the red lines in the terminal nodes) should be computed by fixing all remaining (fixed- an random-effects) predictor variables at their means (or majority class, for categorical predictors). By default, \code{fitted = "combined"} yields fitted values, computed based on the observed values of the remaining (random and fixed-effects) predictor variables. We employed the marginal approach here, as this yields straight lines plotted in the terminal nodes, which may better reflect the average trajectories. 
+%
+To depict observed data as growth curves instead of single datapoints, specify `which = "growth"`:
+%
+<<eval=FALSE, echo=TRUE>>=
+plot(gc_tree, which = "growth")
+@
 %
 \begin{figure}[t!]
 \centering
 \setkeys{Gin}{width=0.8\textwidth}
 <<eval = TRUE, echo = FALSE, fig = TRUE, width = 9, height = 7>>=
-plot(gc_tree, which = "tree", fitted = "marginal")
+plot(gc_tree, which = "growth")
 @
 \caption{\label{fig:gc_tree} Linear mixed-effects model tree with growth curve models in the terminal nodes.}
 \end{figure}

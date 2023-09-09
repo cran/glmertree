@@ -96,7 +96,7 @@ betamertree <- function(formula, data, family = NULL, weights = NULL,
     
     ## fit tree
     #if (is.null(q_cluster)) {
-      tree <- betareg::betatree(tf, partition = pf, data = data,  
+      tree <- betatree_alt(tf, partition = pf, data = data,  
                        offset = .ranef, link = "logit", link.phi = "log",
                        weights = .weights, dfsplit = dfsplit, ...)
     #} else {
@@ -340,4 +340,222 @@ predict.betamertree <- function(object, newdata = NULL, type = "response",
     #  predict(object$tree, newdata = newdata, type = type)
     #}
   }
+}
+
+
+betatree_alt <- function (formula, partition, data, subset = NULL, na.action = na.omit, 
+                      weights, offset, cluster, link = "logit", link.phi = "log", 
+                      control = betareg::betareg.control(), ...) 
+{
+  control <- partykit::mob_control(...)
+  control$xtype <- control$ytype <- "data.frame"
+  cl <- match.call(expand.dots = TRUE)
+  f <- if (missing(partition)) 
+    Formula::Formula(formula)
+  else Formula::as.Formula(formula, partition)
+  if (length(f)[2L] == 1L) {
+    attr(f, "rhs") <- c(list(1), list(1), attr(f, "rhs"))
+    formula <- Formula::as.Formula(formula(f))
+  }
+  else if (length(f)[2L] == 2L) {
+    attr(f, "rhs") <- c(attr(f, "rhs")[[1L]], list(1), attr(f, 
+                                                            "rhs")[[2L]])
+    formula <- Formula::as.Formula(formula(f))
+  }
+  else {
+    formula <- f
+  }
+  mob_formula <- formula(Formula::as.Formula(
+    formula(formula, rhs = 1L:2L, collapse = TRUE), formula(formula, lhs = 0L, 
+                                                            rhs = 3L)))
+  
+  
+  ## Temporary fix for when no regressors have been specified (Needed up to Version: 3.1-4, Date: 2021-02-09, perhaps not after that)
+  if (sum(as.character(mob_formula[[3]][[2]]) == c("+", "1", "1")) == 3) {
+    mob_formula <- formula(Formula::as.Formula(
+      formula(formula, rhs = 1L, collapse = TRUE), formula(formula, lhs = 0L, 
+                                                           rhs = 3L)))
+  }
+  ## End of fix
+  
+  
+  br_call <- match.call(expand.dots = FALSE)
+  br_call$partition <- br_call$cluster <- br_call$... <- NULL
+  br_call$formula <- formula(formula, lhs = 1L, rhs = 1L:2L) 
+  ft <- terms(formula, data = data, lhs = 1L, rhs = 1L:2L) ## full terms
+  xt <- terms(formula, data = data, lhs = 1L, rhs = 1L) ## z terms (should be ~1; specifies predictors for the variance)
+  zt <- terms(formula, data = data, lhs = 0L, rhs = 2L) ## x terms, specifies predictors for the mean
+  betafit <- function(y, x, start = NULL, weights = NULL, 
+                      offset = NULL, cluster = NULL, ..., estfun = FALSE, 
+                      object = FALSE) {
+    args <- list(...)
+    ctrl <- list(start = start)
+    anam <- names(args)
+    anam <- anam[!(anam %in% c("link", "link.phi", "type"))]
+    for (n in anam) {
+      ctrl[[n]] <- args[[n]]
+      args[[n]] <- NULL
+    }
+    args$control <- do.call("betareg.control", ctrl)
+    
+    
+    ## Temporary fix, not sure if needed
+    if (is.null(x)) x <- rep(1L, times = length(y))
+    ## end of fix
+      
+      
+    mf <- cbind(y, x)
+    attr(mf, "terms") <- ft
+    y <- y[[1L]]
+    xx <- model.matrix(xt, mf)
+    xz <- model.matrix(zt, mf)
+    args <- c(list(x = xx, y = y, z = xz, weights = weights, 
+                   offset = offset), args)
+    obj <- do.call("betareg.fit", args)
+    rval <- list(coefficients = coef(obj), objfun = obj$loglik, 
+                 estfun = NULL, object = NULL)
+    if (estfun | object) {
+      class(obj) <- "betareg"
+      obj$contrasts <- attr(x, "contrasts")
+      obj$levels <- list(mu = attr(x, "xlevels"), phi = attr(x, 
+                                                             "xlevels"), full = attr(x, "xlevels"))
+      obj$call <- br_call
+      obj$terms <- list(mean = xt, precision = zt, full = ft)
+      obj$model <- mf
+      rval$object <- obj
+    }
+    if (estfun) {
+      obj$y <- y
+      obj$x <- list(mean = xx, precision = xz)
+      rval$estfun <- estfun.betareg(obj)
+    }
+    return(rval)
+  }
+  m <- match.call(expand.dots = FALSE)
+  m$formula <- mob_formula
+  m$fit <- betafit
+  m$control <- control
+  m$link <- link
+  m$link.phi <- link.phi
+  m$partition <- NULL
+  if ("..." %in% names(m)) 
+    m[["..."]] <- NULL
+  m[[1L]] <- as.call(expression(partykit::mob))[[1L]]
+  rval <- eval(m, parent.frame())
+  rval$info$call <- cl
+  class(rval) <- c("betatree", class(rval))
+  return(rval)
+}
+
+
+
+#############################################################
+##
+## Function copied from function betareg:::estfun.betareg.
+## This code was written by Achim Zeileis.
+## Code copied from betareg version 3.1-4.
+## Code copied here to avoid use of :::
+##
+estfun.betareg <- function (x, phi = NULL, ...) {
+  
+  y <- if (is.null(x$y)) model.response(model.frame(x)) else x$y
+  xmat <- if (is.null(x$x)) model.matrix(x, model = "mean") else x$x$mean
+  zmat <- if (is.null(x$x)) model.matrix(x, model = "precision") else x$x$precision
+  offset <- x$offset
+  if (is.null(offset[[1L]])) offset[[1L]] <- rep.int(0, NROW(xmat))
+  if (is.null(offset[[2L]])) offset[[2L]] <- rep.int(0, NROW(zmat))
+  wts <- weights(x)
+  if (is.null(wts)) wts <- 1
+  phi_full <- if (is.null(phi)) x$phi else phi
+  beta <- x$coefficients$mean
+  gamma <- x$coefficients$precision
+  ystar <- qlogis(y)
+  eta <- as.vector(xmat %*% beta + offset[[1L]])
+  phi_eta <- as.vector(zmat %*% gamma + offset[[2L]])
+  mu <- x$link$mean$linkinv(eta)
+  phi <- x$link$precision$linkinv(phi_eta)
+  mustar <- digamma(mu * phi) - digamma((1 - mu) * phi)
+  rval <- phi * (ystar - mustar) * as.vector(x$link$mean$mu.eta(eta)) * wts * xmat
+  if (phi_full) {
+    rval <- cbind(rval, (mu * (ystar - mustar) + log(1 - y) - digamma((1 - mu) * phi) + digamma(phi)) * 
+                    as.vector(x$link$precision$mu.eta(phi_eta)) * wts * zmat)
+    colnames(rval) <- names(coef(x, phi = phi_full))
+  }
+  attr(rval, "assign") <- NULL
+  if (x$type == "BR") {
+    nobs <- nrow(xmat)
+    k <- ncol(xmat)
+    m <- ncol(zmat)
+    InfoInv <- x$vcov
+    D1 <- x$link$mean$mu.eta(eta)
+    D2 <- x$link$precision$mu.eta(phi_eta)
+    D1dash <- x$link$mean$dmu.deta(eta)
+    D2dash <- x$link$precision$dmu.deta(phi_eta)
+    Psi2 <- psigamma((1 - mu) * phi, 1)
+    dPsi1 <- psigamma(mu * phi, 2)
+    dPsi2 <- psigamma((1 - mu) * phi, 2)
+    kappa2 <- psigamma(mu * phi, 1) + Psi2
+    kappa3 <- dPsi1 - dPsi2
+    Psi3 <- psigamma(phi, 1)
+    dPsi3 <- psigamma(phi, 2)
+    PQ <- function(t) {
+      prodfun <- function(mat1, mat2) {
+        sapply(seq_len(nobs), function(i) tcrossprod(mat1[i, 
+        ], mat2[i, ]), simplify = FALSE)
+      }
+      if (t <= k) {
+        Xt <- xmat[, t]
+        bb <- if (k > 0L) {
+          bbComp <- wts * phi^2 * D1 * (phi * D1^2 * kappa3 + D1dash * kappa2) * Xt * xmat
+          prodfun(xmat, bbComp)
+        } else {
+          sapply(1:nobs, function(x) matrix(0, k, k))
+        }
+        bg <- if ((k > 0L) & (m > 0L)) {
+          bgComp <- wts * phi * D1^2 * D2 * (mu * phi * kappa3 + phi * dPsi2 + kappa2) * Xt * zmat
+          prodfun(xmat, bgComp)
+        } else {
+          sapply(1:nobs, function(x) matrix(0, k, m))
+        }
+        gg <- if (m > 0L) {
+          ggComp <- wts * phi * D1 * D2^2 * (mu^2 * kappa3 - dPsi2 + 2 * mu * dPsi2) * 
+            Xt * zmat + wts * phi * D1 * D2dash * (mu * kappa2 - Psi2) * Xt * zmat
+          prodfun(zmat, ggComp)
+        } else {
+          sapply(1:nobs, function(x) matrix(0, m, m))
+        }
+      } else {
+        Zt <- zmat[, t - k]
+        bb <- if (k > 0L) {
+          bbComp <- wts * phi * D2 * 
+            (phi * D1^2 * mu * kappa3 + phi * D1^2 * dPsi2 + D1dash * mu * kappa2 - D1dash * Psi2) * Zt * xmat
+          prodfun(xmat, bbComp)
+        } else {
+          sapply(1:nobs, function(x) matrix(0, k, k))
+        }
+        bg <- if ((k > 0L) & (m > 0L)) {
+          bgComp <- wts * D1 * D2^2 * (phi * mu^2 * kappa3 + 
+                                         phi * (2 * mu - 1) * dPsi2 + mu * kappa2 - 
+                                         Psi2) * Zt * zmat
+          prodfun(xmat, bgComp)
+        }
+        else sapply(1:nobs, function(x) matrix(0, k, 
+                                               m))
+        gg <- if (m > 0L) {
+          ggComp <- wts * D2^3 * (mu^3 * kappa3 + (3 * mu^2 - 3 * mu + 1) * dPsi2 - dPsi3) * 
+            Zt * zmat + wts * D2dash * D2 * (mu^2 * kappa2 + (1 - 2 * mu) * Psi2 - Psi3) * Zt * zmat
+          prodfun(zmat, ggComp)
+        }
+        else sapply(1:nobs, function(x) matrix(0, m, m))
+      }
+      sapply(seq_len(nobs), function(i) {
+        sum(diag(InfoInv %*% rbind(cbind(bb[[i]], bg[[i]]), cbind(t(bg[[i]]), gg[[i]]))))/2}, simplify = TRUE)
+    }
+    if (inherits(InfoInv, "try-error")) {
+      adjustment <- rep.int(NA_real_, k + m)
+    }
+    else adjustment <- sapply(1:(k + m), PQ)
+    rval <- rval + adjustment
+  }
+  return(rval)
 }

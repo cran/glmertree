@@ -200,6 +200,12 @@ predict(gt, type = "response") # default behavior, may also be "node" or "link"
 predict(gt, re.form = NA) # excludes random effects, see ?lme4::predict.merMod
 residuals(gt)
 VarCorr(gt) # see lme4::VarCorr
+
+## Alternative specification for binomial family: no. of successes and failures
+DepressionDemo$failures <- as.numeric(DepressionDemo$depression_bin) - 1
+DepressionDemo$successes <- 1 - DepressionDemo$failures
+gt <- glmertree(cbind(failures, successes) ~ treatment | cluster | age + anxiety + duration,
+  data = DepressionDemo, ytype = "matrix") ## see also ?partykit::mob_control
 }
 }
 \keyword{tree}

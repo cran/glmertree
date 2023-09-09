@@ -56,12 +56,15 @@ VarCorr(lt.default)
 ## Account for measurement level of the partitioning variables:
 lt.cluster <- lmertree(form, cluster = person, data = GrowthCurveDemo)
 plot(lt.cluster, which = "tree") ## yields correct tree
-VarCorr(lt.cluster) ## yields slightly larger ranef variance
+plot(lt.cluster, which = "growth") ## plot individual growth curves not datapoints 
+coef(lt.cluster) ## node-specific fixed effects
+VarCorr(lt.cluster) ## with smaller trees random effects explain more variance
 
 ## Fit LMM tree with random intercept and random slope of time w.r.t. person:
 form.s <- y ~ time | (1 + time | person) | x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8
 lt.s.cluster <- lmertree(form.s, cluster = person, data = GrowthCurveDemo)
 plot(lt.s.cluster, which = "tree") ## same tree as before
+coef(lt.cluster) 
 VarCorr(lt.s.cluster)
 }
 }

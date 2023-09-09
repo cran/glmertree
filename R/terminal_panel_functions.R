@@ -335,3 +335,120 @@ node_terminal_glmertree <- function(obj, digits = 3, abbreviate = FALSE,
   return(rval)
 }
 class(node_terminal_glmertree) <- "grapcon_generator"
+
+
+
+
+
+
+
+node_growthplot <- function(mobobj, cluster = NULL,
+                            id = TRUE, pop = TRUE, bg = "white",
+                            curvecol = gray(0.2, alpha = 1/6), curvelwd = 2,
+                            linecol = 2, linelwd = 3,
+                            ylines = NULL, xlab = FALSE, ylab = FALSE,
+                            mainlab = NULL, observed = TRUE, fitmean = TRUE,
+                            xscale = NULL, xaxis.at = NULL, xaxis.labs = NULL,
+                            gp = gpar(...), ...)
+{
+  ## obtain dependent variable
+  mf <- model.frame(mobobj)
+  y <- Formula::model.part(mobobj$info$Formula, mf, lhs = 1L, rhs = 0L)
+  if(isTRUE(ylab)) ylab <- names(y)
+  if(identical(ylab, FALSE)) ylab <- ""
+  if(is.null(ylines)) ylines <- ifelse(identical(ylab, ""), 3, 5)
+  y <- y[[1L]]
+  
+  ## obtain explanatory variables
+  X <- Formula::model.part(mobobj$info$Formula, mf, lhs = 0L, rhs = 1L)
+  X <- X[,NCOL(X),drop=FALSE]
+  xlab <- if(!identical(xlab, FALSE)) { if(isTRUE(xlab)) colnames(X) else xlab[1L] } else ""
+  
+  ## axis scaling
+  if (is.null(xscale)) xscale <- range(X) + c(-0.1, 0.1) * diff(range(X))
+  yscale <- range(y) + c(-0.1, 0.1) * diff(range(y))
+  
+  ## other information
+  fitted <- mobobj$fitted[["(fitted)"]]
+  cf <- coef(mobobj)
+  
+  rval <- function(node) {
+    
+    ## node index
+    nid <- id_node(node)
+    ix <- fitted %in% nodeids(mobobj, from = nid, terminal = TRUE)
+    
+    ## subsets
+    y <- y[ix]
+    x <- X[ix, 1L]
+    cf <- cf[as.character(nid), ]
+    
+    ## set up top viewport
+    top_vp <- viewport(layout = grid.layout(nrow = 2, ncol = 3,
+                                            widths = unit(c(ylines, 1, 1), c("lines", "null", "lines")),
+                                            heights = unit(c(1, 1), c("lines", "null"))),
+                       width = unit(1, "npc"),
+                       height = unit(1, "npc") - unit(2, "lines"),
+                       name = paste("node_growthplot", nid, sep = ""),
+                       gp = gp)
+    pushViewport(top_vp)
+    grid.rect(gp = gpar(fill = bg, col = 0))
+    
+    ## main title
+    top <- viewport(layout.pos.col = 2, layout.pos.row = 1)
+    pushViewport(top)
+    
+    if (is.null(mainlab)) { 
+      mainlab <- if(id) {
+        function(id, nobs) sprintf("Node %s (n = %s)", id, nobs)
+      } else {
+        function(id, nobs) sprintf("n = %s", nobs)
+      }
+    }
+    if (is.function(mainlab)) {
+      mainlab <- mainlab(nid, info_node(node)$nobs)
+    }
+    grid.text(mainlab)
+    popViewport()
+    
+    plot <- viewport(layout.pos.col = 2, layout.pos.row = 2,
+                     xscale = xscale, yscale = yscale,
+                     name = paste0("node_growthplot", nid, "plot"),
+                     clip = FALSE)
+    pushViewport(plot)
+    
+    if (is.null(xaxis.at)) {
+      grid.xaxis(at = c(ceiling(xscale[1L] * 10), floor(xscale[2L] * 10))/10)
+    } else {
+      if (is.null(xaxis.labs)) xaxis.labs <- xaxis.at
+      grid.xaxis(at = xaxis.at, label = xaxis.labs)
+    }
+    grid.yaxis(at = c(ceiling(yscale[1L] * 10), floor(yscale[2L] * 10))/10)
+    grid.rect(gp = gpar(fill = "transparent"))
+    grid.clip()
+    
+    ## plot individual growth curves
+    if (observed) {
+      if(!is.null(cluster)) {
+        cluster <- factor(cluster[ix])
+        for(j in levels(cluster)) {
+          jx <- which(cluster == j)
+          grid.lines(unit(x[jx], "native"), unit(y[jx], "native"), gp = gpar(col = curvecol, lwd = curvelwd))
+        }
+      }
+    }
+    
+    ## plot model-implied average curve
+    if (fitmean) {
+      grid.abline(unit(cf[1], "native"), unit(cf[2], "native"), gp = gpar(col = linecol, lwd = linelwd))
+    }
+    
+    if(ylab != "") grid.text(ylab, y = unit(0.5, "npc"), x = unit(-2.5, "lines"), rot = 90)
+    if(xlab != "") grid.text(xlab, x = unit(0.5, "npc"), y = unit(-2, "lines"))                
+    if(pop) popViewport(2L) else upViewport(2L)
+    
+  }
+  
+  return(rval)
+}
+class(node_growthplot) <- "grapcon_generator"
