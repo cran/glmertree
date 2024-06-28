@@ -9,12 +9,14 @@ importFrom("stats", "coef", "logLik", "model.frame", "predict", "terms", "update
            "residuals", "as.formula", "complete.cases", "model.response", "qlogis", "weights")
 importFrom("grDevices", "devAskNewPage", "gray")
 importFrom("graphics", "boxplot", "hist")
-importFrom("stats", "model.matrix", "na.omit")
+importFrom("stats", "model.matrix", "na.omit", "relevel", "binomial")
 
 export(
   "lmertree",
   "glmertree",
-  "betamertree"
+  "betamertree",
+  "cv.lmertree",
+  "cv.glmertree"
 )
 
 S3method("print", "lmertree")
@@ -54,3 +56,6 @@ S3method("residuals", "betamertree")
 S3method("terms", "betamertree")
 S3method("as.party", "betamertree")
 S3method("VarCorr", "betamertree")
+
+S3method("summary", "cv.lmertree")
+S3method("summary", "cv.glmertree")

@@ -30,6 +30,12 @@ time-invariant partitioning variables. Thus, they are measurements on the person
   \item{x8}{numeric. Potential partitioning variable.}
 }}
 
+\references{
+Fokkema M & Zeileis A (2024). Subgroup detection in linear growth curve models with 
+  generalized linear mixed model (GLMM) trees. Behavior Research Methods. 
+  \doi{10.3758/s13428-024-02389-1}
+  }
+
 \details{Data were generated so that \code{x1}, \code{x2} and \code{x3} are
 true partitioning variables, \code{x4} through \code{x8} are noise
 variables. The (potential) partitioning variables are time invariant.

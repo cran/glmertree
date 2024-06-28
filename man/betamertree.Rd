@@ -67,8 +67,6 @@ betamertree(formula, data, family = NULL, weights = NULL, cluster = NULL,
 }
   
 \details{
-  Experimental function.
-  
   Function betamertree aims to learn a tree where each terminal node is associated with
   different fixed-effects regression coefficients, while adjusting for global 
   random effects (such as a random intercept). It is a generalization of the ideas
@@ -122,6 +120,14 @@ Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2018).
   \dQuote{Detecting Treatment-Subgroup Interactions in Clustered Data
   with Generalized Linear Mixed-Effects Model Trees}. Behavior Research 
   Methods, 50(5), 2016-2034. \doi{10.3758/s13428-017-0971-x}
+  
+Fokkema M, Edbrooke-Childs J & Wolpert M (2021). \dQuote{Generalized linear mixed-model 
+  (GLMM) trees: A flexible decision-tree method for multilevel and longitudinal data.} 
+  Psychotherapy Research, 31(3), 329-341. \doi{10.1080/10503307.2020.1785037}
+  
+Fokkema M & Zeileis A (2024). Subgroup detection in linear growth curve models with 
+  generalized linear mixed model (GLMM) trees. Behavior Research Methods. 
+  \doi{10.3758/s13428-024-02389-1}
 }
 
 \seealso{\code{\link[glmmTMB]{glmmTMB}}, 
@@ -143,10 +149,10 @@ ReadingSkills$gr <- factor(rep(letters[1:5], length.out = nrow(ReadingSkills)))
 betamer_form <- accuracy ~ iq | gr | dyslexia + x1 + x2 + x3
 bmertree <- betamertree(betamer_form, data = ReadingSkills, minsize = 10)
 VarCorr(bmertree)
+ranef(bmertree)
 fixef(bmertree)
 coef(bmertree)
 plot(bmertree)
-plot(bmertree, type = "simple")
 predict(bmertree, newdata = ReadingSkills[1:5,])
 predict(bmertree) ## see ?predict.glmmmTMB for other arguments that can be passed
 residuals(bmertree) ## see ?residuals.glmmmTMB for other arguments that can be passed

@@ -194,14 +194,11 @@ betamertree <- function(formula, data, family = NULL, weights = NULL,
   return(result)
 }
 
-
-
 fixef.betamertree <- coef.betamertree <- 
   function(object, which = "tree", drop = FALSE, ...) {
   if (which == "tree") { 
-    coefs <- coef(object$tree, drop = FALSE)
-    coefs <- coefs[ , -which(colnames(coefs) == "(phi)_(Intercept)"), drop = FALSE]
-    if (object$joint) { ## overwrite tree coefs with those (g)lmer:
+    coefs <- do.call(rbind, coef(object$tree, drop = FALSE)[,"mean"])
+    if (object$joint) { ## overwrite tree coefs with those of (g)lmer:
       glmmTMB_fixef <- fixef(object[["glmmTMB"]])$cond
       if (nrow(coefs) > 1L) {
         ## Add the intercept to intercepts of all other nodes:

@@ -431,17 +431,24 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
 fixef.lmertree <- coef.lmertree <- 
   fixef.glmertree <- coef.glmertree <- 
   function(object, which = "tree", drop = FALSE, ...) {
+    
   merMod_type <- ifelse(inherits(object, "lmertree"), "lmer", "glmer")
+  
   if (which == "tree") { 
     coefs <- coef(object$tree, drop = FALSE)
-    if (object$joint) { ## overwrite tree coefs with those (g)lmer:
+    coefs <- coefs[levels(object$data$.tree), , drop = FALSE]
+    if (object$joint) { 
+      ## overwrite tree coefs with fixed effects from (g)lmer
       lmer_fixef <- fixef(object[[merMod_type]])
+  
       if (nrow(coefs) > 1L) {
-        ## Add the intercept to intercepts of all other nodes:
-        lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] <- 
-          lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] + lmer_fixef[1L]
-        ## Change name of intercept to first terminal node:
-        names(lmer_fixef)[1L] <- paste0(".tree", rownames(coefs)[1L])
+        if ("(Intercept)" %in% names(lmer_fixef)) {          
+          ## Add intercept to intercepts of all other nodes
+          lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] <- 
+            lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] + lmer_fixef["(Intercept)"]
+          ## Change name of intercept to first terminal node
+          names(lmer_fixef)[1L] <- paste0(".tree", rownames(coefs)[1L])
+        }
         local_coefs <- lmer_fixef[grepl(".tree", names(lmer_fixef))]
         for (i in rownames(coefs)) {
           coef_names <- paste0(".tree", i)
@@ -452,7 +459,12 @@ fixef.lmertree <- coef.lmertree <-
           coefs[i, ] <- local_coefs[coef_names]
         }
       } else {
-        coefs[1, ] <- lmer_fixef[colnames(coefs)]
+        if ("(Intercept)" %in% names(fixef)) {          
+          ## Add intercept to intercepts of all other nodes
+          lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] <- 
+            lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] + lmer_fixef["(Intercept)"]
+        }
+        coefs[1L, ] <- lmer_fixef[colnames(coefs)]
       }
     }
   } else if (which == "global") {
@@ -465,9 +477,12 @@ fixef.lmertree <- coef.lmertree <-
 
 
 
-VarCorr.lmertree <- VarCorr.glmertree <- function(x, sigma = 1, ...) {
-  merMod_type <- ifelse(inherits(x, "lmertree"), "lmer", "glmer")
-  VarCorr(x[[merMod_type]], sigma = sigma, ...)
+VarCorr.lmertree <- function(x, ...) {
+  VarCorr(x[["lmer"]], ...)
+}
+
+VarCorr.glmertree <- function(x, sigma = 1, ...) {
+  VarCorr(x[["glmer"]], sigma = sigma, ...)
 }
 
 

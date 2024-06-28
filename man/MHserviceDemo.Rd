@@ -44,6 +44,12 @@ mental-health service providers in the UK. Note that the data were
 artificially generated and do not reflect actual empirical findings.
 }
 
+\references{
+Fokkema M, Edbrooke-Childs J & Wolpert M (2021). \dQuote{Generalized linear mixed-model 
+  (GLMM) trees: A flexible decision-tree method for multilevel and longitudinal data.} 
+  Psychotherapy Research, 31(3), 329-341. \doi{10.1080/10503307.2020.1785037}
+}
+
 \seealso{\code{\link{lmertree}}, \code{\link{glmertree}}}
 
 \examples{
