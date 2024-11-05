@@ -11,7 +11,7 @@
 \alias{resid.betamertree}
 \alias{VarCorr.betamertree}
 
-\encoding{latin1}
+\encoding{utf8}
 
 \title{Beta Mixed-Effects Regression Trees}
 
@@ -118,16 +118,26 @@ The function returns a list with the following objects:
 \references{
 Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2018).
   \dQuote{Detecting Treatment-Subgroup Interactions in Clustered Data
-  with Generalized Linear Mixed-Effects Model Trees}. Behavior Research 
-  Methods, 50(5), 2016-2034. \doi{10.3758/s13428-017-0971-x}
+    with Generalized Linear Mixed-Effects Model Trees}.
+  \emph{Behavior Research Methods}, \bold{50}(5), 2016--2034.
+  \doi{10.3758/s13428-017-0971-x}
   
-Fokkema M, Edbrooke-Childs J & Wolpert M (2021). \dQuote{Generalized linear mixed-model 
-  (GLMM) trees: A flexible decision-tree method for multilevel and longitudinal data.} 
-  Psychotherapy Research, 31(3), 329-341. \doi{10.1080/10503307.2020.1785037}
+Fokkema M, Edbrooke-Childs J, Wolpert M (2021).
+  \dQuote{Generalized Linear Mixed-Model (GLMM) Trees: A Flexible
+    Decision-Tree Method for Multilevel and Longitudinal Data.} 
+  \emph{Psychotherapy Research}, \bold{31}(3), 329--341.
+  \doi{10.1080/10503307.2020.1785037}
   
-Fokkema M & Zeileis A (2024). Subgroup detection in linear growth curve models with 
-  generalized linear mixed model (GLMM) trees. Behavior Research Methods. 
+Fokkema M, Zeileis A (2024).
+  \dQuote{Subgroup Detection in Linear Growth Curve Models with
+    Generalized Linear Mixed Model (GLMM) Trees.}
+  \emph{Behavior Research Methods}, \bold{56}(7), 6759--6780. 
   \doi{10.3758/s13428-024-02389-1}
+
+Grün B, Kosmidis I, Zeileis A (2012).
+  Extended Beta Regression in R: Shaken, Stirred, Mixed, and Partitioned.
+  \emph{Journal of Statistical Software}, \bold{48}(11), 1--25.
+  \doi{10.18637/jss.v048.i11}
 }
 
 \seealso{\code{\link[glmmTMB]{glmmTMB}}, 

@@ -1,6 +1,10 @@
 bibentry(bibtype = "Article",
   title          = "Detecting Treatment-Subgroup Interactions in Clustered Data with Generalized Linear Mixed-Effects Model Trees",
-  author         = c(as.person("Marjolein Fokkema"), as.person("Niels Smits"), as.person("Achim Zeileis"), as.person("Torsten Hothorn"), as.person("Henk Kelderman")),
+  author         = c(person(given = "Marjolein", family = "Fokkema", comment = c(ORCID = "0000-0002-9252-8325")),
+                     person(given = "Niels", family = "Smits", comment = c(ORCID = "0000-0003-3669-9266")),
+                     person(given = "Achim", family = "Zeileis", comment = c(ORCID = "0000-0003-0918-3766")),
+                     person(given = "Torsten", family = "Hothorn", comment = c(ORCID = "0000-0001-8301-0471")),
+                     person(given = "Henk", family = "Kelderman")),
   journal        = "Behavior Research Methods",
   year           = "2018",
   volume         = "50",
@@ -8,4 +12,17 @@ bibentry(bibtype = "Article",
   pages          = "2016-2034",
   doi            = "10.3758/s13428-017-0971-x",
   header         = "To cite glmertree in publications use:"
+)
+
+bibentry(bibtype = "Article",
+  title          = "Subgroup Detection in Linear Growth Curve Models with Generalized Linear Mixed Model ({GLMM}) Trees",
+  author         = c(person(given = "Marjolein", family = "Fokkema", comment = c(ORCID = "0000-0002-9252-8325")),
+                     person(given = "Achim", family = "Zeileis", comment = c(ORCID = "0000-0003-0918-3766"))),
+  journal        = "Behavior Research Methods",
+  year           = "2024",
+  volume         = "56",
+  issue          = "7",
+  pages          = "6759--6780",
+  doi            = "10.3758/s13428-024-02389-1",
+  header         = "If you use glmertree for growth curve modeling, please also cite:"
 )

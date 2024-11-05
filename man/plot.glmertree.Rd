@@ -2,8 +2,6 @@
 \alias{plot.lmertree}
 \alias{plot.glmertree}
 
-\encoding{latin1}
-
 \title{Plotting (Generalized) Linear Mixed Model Trees}
 
 \description{
@@ -131,8 +129,15 @@
 \references{
 Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2018).
   \dQuote{Detecting Treatment-Subgroup Interactions in Clustered Data
-  with Generalized Linear Mixed-Effects Model Trees}. Behavior Research 
-  Methods, 50(5), 2016-2034. \doi{10.3758/s13428-017-0971-x}
+    with Generalized Linear Mixed-Effects Model Trees}.
+  \emph{Behavior Research Methods}, \bold{50}(5), 2016--2034.
+  \doi{10.3758/s13428-017-0971-x}
+  
+Fokkema M, Zeileis A (2024).
+  \dQuote{Subgroup Detection in Linear Growth Curve Models with
+    Generalized Linear Mixed Model (GLMM) Trees.}
+  \emph{Behavior Research Methods}, \bold{56}(7), 6759--6780. 
+  \doi{10.3758/s13428-024-02389-1}
 }
 
 

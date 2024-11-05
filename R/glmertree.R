@@ -8,10 +8,14 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
 {
   ## remember call
   cl <- match.call()
-  
+
   ## check if data is complete
-  all_vars <- if (any(grepl(".", as.character(formula), fixed = TRUE))) 
-    names(data) else all.vars(formula)
+  all_vars <- if (any(all.vars(formula) %in% ".")) {
+    names(data) 
+    warning("Use of the dot in the lmertree formula is not recommended, it may have unintended consequences.")
+  } else {
+    all.vars(formula)
+  }    
   if (nrow(data[ , all_vars]) != sum(stats::complete.cases(data[ , all_vars]))) {
     warning("some variables have missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
     data_has_missings <- TRUE
@@ -239,8 +243,12 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   cl <- match.call()
   
   ## check if data is complete
-  all_vars <- if (any(grepl(".", as.character(formula), fixed = TRUE))) 
-    names(data) else all.vars(formula)
+  all_vars <- if (any(all.vars(formula) %in% ".")) {
+    names(data) 
+    warning("Use of the dot in the glmertree formula is not recommended, it may have unintended consequences.")
+  } else {
+    all.vars(formula)
+  }  
   if (nrow(data[ , all_vars]) != sum(stats::complete.cases(data[ , all_vars]))) {
     warning("'data' contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
     data_has_missings <- TRUE

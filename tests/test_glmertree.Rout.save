@@ -1,7 +1,7 @@
 
-R version 4.3.1 (2023-06-16 ucrt) -- "Beagle Scouts"
-Copyright (C) 2023 The R Foundation for Statistical Computing
-Platform: x86_64-w64-mingw32/x64 (64-bit)
+R version 4.4.1 (2024-06-14) -- "Race for Your Life"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -22,7 +22,8 @@ Loading required package: partykit
 Loading required package: grid
 Loading required package: libcoin
 Loading required package: mvtnorm
-> options(width = 70, prompt = "R> ", continue = "+  ")
+> options(width = 70, prompt = "R> ", continue = "+  ", digits = 4)
+R> 
 R> data("DepressionDemo", package = "glmertree")
 R> summary(DepressionDemo)
    depression          treatment     cluster        age    
@@ -33,108 +34,94 @@ R> summary(DepressionDemo)
  3rd Qu.:11.00                    5      :15   3rd Qu.:52  
  Max.   :16.00                    6      :15   Max.   :69  
                                   (Other):60               
-    anxiety         duration      depression_bin
- Min.   : 3.00   Min.   : 1.000   0:78          
- 1st Qu.: 8.00   1st Qu.: 5.000   1:72          
- Median :10.00   Median : 7.000                 
- Mean   :10.26   Mean   : 6.973                 
- 3rd Qu.:12.00   3rd Qu.: 9.000                 
- Max.   :18.00   Max.   :17.000                 
-                                                
-R> lmm_tree <- lmertree(depression ~ treatment | cluster | 
-+                         age + duration + anxiety, data = DepressionDemo)
+    anxiety        duration     depression_bin
+ Min.   : 3.0   Min.   : 1.00   0:78          
+ 1st Qu.: 8.0   1st Qu.: 5.00   1:72          
+ Median :10.0   Median : 7.00                 
+ Mean   :10.3   Mean   : 6.97                 
+ 3rd Qu.:12.0   3rd Qu.: 9.00                 
+ Max.   :18.0   Max.   :17.00                 
+                                              
+R> 
+R> lmm_tree <- lmertree(depression ~ treatment | cluster | age + duration + anxiety,
++    data = DepressionDemo)
 R> plot(lmm_tree, which = "tree")
 R> plot(lmm_tree, which = "ranef")
 $cluster
 
-R> round(coef(lmm_tree), digits = 6)
+R> coef(lmm_tree)
   (Intercept) treatmentTreatment 2
-3    7.500140             4.122083
-4    8.591409             0.521259
-5   11.087612            -4.546886
-R> round(ranef(lmm_tree)$cluster, digits = 6)
+3       7.500               4.1221
+4       8.591               0.5213
+5      11.088              -4.5469
+R> ranef(lmm_tree)$cluster
    (Intercept)
-1    -0.309644
-2    -0.341546
-3    -0.067551
-4    -0.576757
-5    -0.152473
-6    -0.087617
-7     0.129055
-8     0.225009
-9     0.261257
-10    0.920266
-R> formatC(predict(lmm_tree, newdata = DepressionDemo[1:7, ]), format = "f", 
-+          digits = 7)
-           1            2            3            4            5 
-"10.7779679" "11.5546716"  "7.1585945"  "9.0451168" "11.2806773" 
-           6            7 
- "8.8164179" "11.8834799" 
-R> formatC(predict(lmm_tree, newdata = DepressionDemo[1:7, -3], re.form = NA),
-+          format = "f", digits = 7)
-           1            2            3            4            5 
-"11.0876120" "11.6222230"  "7.5001402"  "9.1126682" "11.6222230" 
-           6            7 
- "8.5914088" "11.6222230" 
-R> formatC(residuals(lmm_tree)[1:10], format = "f", digits = 7)
-           1            2            3            4            5 
- "2.2220321"  "2.4453284" "-0.1585945"  "0.9548832" "-1.2806773" 
-           6            7            8            9           10 
- "1.1835821" "-1.8834799" "-1.7711225"  "0.8008197"  "4.0766164" 
-R> formatC(predict(lmm_tree)[1:10], format = "f", digits = 7)
-           1            2            3            4            5 
-"10.7779679" "11.5546716"  "7.1585945"  "9.0451168" "11.2806773" 
-           6            7            8            9           10 
- "8.8164179" "11.8834799"  "8.7711225"  "6.1991803"  "6.9233836" 
+1     -0.30964
+2     -0.34155
+3     -0.06755
+4     -0.57676
+5     -0.15247
+6     -0.08762
+7      0.12906
+8      0.22501
+9      0.26126
+10     0.92027
+R> predict(lmm_tree, newdata = DepressionDemo[1:7, ])
+     1      2      3      4      5      6      7 
+10.778 11.555  7.159  9.045 11.281  8.816 11.883 
+R> predict(lmm_tree, newdata = DepressionDemo[1:7, -3], re.form = NA)
+     1      2      3      4      5      6      7 
+11.088 11.622  7.500  9.113 11.622  8.591 11.622 
+R> residuals(lmm_tree)[1:10]
+      1       2       3       4       5       6       7       8 
+ 2.2220  2.4453 -0.1586  0.9549 -1.2807  1.1836 -1.8835 -1.7711 
+      9      10 
+ 0.8008  4.0766 
+R> predict(lmm_tree)[1:10]
+     1      2      3      4      5      6      7      8      9     10 
+10.778 11.555  7.159  9.045 11.281  8.816 11.883  8.771  6.199  6.923 
 R> 
-R> glmm_tree <- glmertree(depression_bin ~ treatment | 
-+                           cluster | age + duration + anxiety, data = DepressionDemo, 
-+                         family = binomial)
+R> glmm_tree <- glmertree(depression_bin ~ treatment | cluster | age + duration + anxiety,
++    data = DepressionDemo, family = binomial)
 R> plot(glmm_tree, which = "tree")
 Loading required namespace: vcd
 R> plot(glmm_tree, which = "ranef")
 $cluster
 
-R> round(coef(glmm_tree), digits = 6)
+R> coef(glmm_tree)
   (Intercept) treatmentTreatment 2
-3   -2.040571             3.048616
-4    0.895104            -0.446130
-5    1.920259            -4.892110
-R> round(ranef(glmm_tree)$cluster, digits = 6)
+3     -2.0406               3.0486
+4      0.8951              -0.4461
+5      1.9203              -4.8921
+R> ranef(glmm_tree)$cluster
    (Intercept)
-1    -0.286691
-2    -0.275303
-3     0.047374
-4     0.056034
-5    -0.103269
-6    -0.180381
-7     0.268662
-8     0.232370
-9     0.044460
-10    0.177206
-R> formatC(predict(glmm_tree, newdata = DepressionDemo[1:7, ]), format = "f", 
-+          digits = 7)
-          1           2           3           4           5 
-"0.8366579" "0.7418140" "0.0898168" "0.6216006" "0.6754067" 
-          6           7 
-"0.7553725" "0.7412556" 
-R> formatC(predict(glmm_tree, newdata = DepressionDemo[1:7, -3], re.form = NA), 
-+          format = "f", digits = 7)
-          1           2           3           4           5 
-"0.8721674" "0.7326373" "0.1150086" "0.6103953" "0.7326373" 
-          6           7 
-"0.7099424" "0.7326373" 
-R> formatC(residuals(glmm_tree)[1:10], format = "f", digits = 7)
-           1            2            3            4            5 
- "0.5972270"  "0.7728605" "-0.4338419"  "0.9751487"  "0.8859348" 
-           6            7            8            9           10 
- "0.7490585"  "0.7738343" "-1.5001216" "-0.2762165"  "2.0558798" 
-R> formatC(predict(glmm_tree)[1:10], format = "f", digits = 7)
-          1           2           3           4           5 
-"0.8366579" "0.7418140" "0.0898168" "0.6216006" "0.6754067" 
-          6           7           8           9          10 
-"0.7553725" "0.7412556" "0.6754067" "0.0374293" "0.1208360" 
+1     -0.28669
+2     -0.27530
+3      0.04737
+4      0.05603
+5     -0.10327
+6     -0.18038
+7      0.26866
+8      0.23237
+9      0.04446
+10     0.17721
+R> predict(glmm_tree, newdata = DepressionDemo[1:7, ])
+      1       2       3       4       5       6       7 
+0.83666 0.74181 0.08982 0.62160 0.67541 0.75537 0.74126 
+R> predict(glmm_tree, newdata = DepressionDemo[1:7, -3], re.form = NA)
+     1      2      3      4      5      6      7 
+0.8722 0.7326 0.1150 0.6104 0.7326 0.7099 0.7326 
+R> residuals(glmm_tree)[1:10]
+      1       2       3       4       5       6       7       8 
+ 0.5972  0.7729 -0.4338  0.9751  0.8859  0.7491  0.7738 -1.5001 
+      9      10 
+-0.2762  2.0559 
+R> predict(glmm_tree)[1:10]
+      1       2       3       4       5       6       7       8 
+0.83666 0.74181 0.08982 0.62160 0.67541 0.75537 0.74126 0.67541 
+      9      10 
+0.03743 0.12084 
 R> 
 > proc.time()
    user  system elapsed 
-   3.64    0.51    4.28 
+  1.866   0.065   1.923 
